@@ -1,18 +1,29 @@
-FILES_LIFE = Life.c
-FILES_LAB  = Lab.c
+CFLAGS   = 
+LFLAGS   = -lsfml-graphics -lsfml-window -lsfml-system
 
-LAB = lab.txt
+CPP      = g++
+LINKER   = g++
+rm       = rm -rf
 
-build : life gen lab search
+SRCDIR   = src
+OBJDIR   = obj
 
-life : $(FILES_LIFE)
-	gcc $(FILES_LIFE) -o life
+TARGET   = maze
 
-gen :
-	./life
+SOURCES  := $(wildcard $(SRCDIR)/*.cpp)
+INCLUDES := $(wildcard $(SRCDIR)/*.h)
+OBJECTS  := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-lab : $(FILES_LAB)
-	gcc $(FILES_LAB) -o lab
+$(TARGET): $(OBJECTS)
+	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
+	@echo "Linking complete!"
 
-search :
-	./lab $(LAB)
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
+	@$(CPP) $(CFLAGS) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
+
+.PHONY: clean
+clean:
+	@$(rm) $(OBJECTS)
+	@$(rm) $(TARGET)
+	@echo "Cleanup complete!"

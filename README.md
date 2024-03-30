@@ -15,7 +15,8 @@
 3. Build & run <br>
     write <code>make</code> in terminal
 
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/cat.gif" width="40%"></p>
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rat.gif" width="40%"></p>
 
 ## Support
 **This project is created by [bai_tim](https://github.com/bai_tim)**
