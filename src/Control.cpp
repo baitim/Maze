@@ -1,24 +1,28 @@
 #include "Control.h"
 
-Object OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_WALL,      false,  "images/Texture/TextureWall.png"},
-    {SYM_OBJ_ROAD,      true,   "images/Texture/TextureRoad.png"},
-    {SYM_OBJ_BORDER,    false,  "images/Texture/TextureBorder.png"},
-    {SYM_OBJ_PLAYER,    false,  "images/Texture/TexturePlayer.png"},
-    {SYM_OBJ_COIN,      true,   "images/Texture/TextureCoin.png"}
-};
-
 int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset)
 {
     sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
-    lab[XYset->py * M + XYset->px] = SYM_OBJ_ROAD;
-    int dx = 0, dy = 0;
+    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_ROAD;
+    float dx = 0, dy = 0;
+    if (XYset->is_active_mouse) {
+        XYset->delay_dx = (XYset->delay_dx + 1) % delay_dx_max;
+        XYset->delay_dy = (XYset->delay_dy + 1) % delay_dy_max;
+        int XY_dx = XYset->dx * ((XYset->delay_dx == 0) ? 1 : 0);
+        int XY_dy = XYset->dy * ((XYset->delay_dy == 0) ? 1 : 0);
+        dx = ((int)mouse_pos.x > WIDTH / 2) ? XY_dx : -XY_dx;
+        dy = ((int)mouse_pos.y > HEIGHT/ 2) ? XY_dy : -XY_dy;
+    }
     switch (event.type) {
         case sf::Event::Closed:
             return 1;
         case sf::Event::MouseButtonReleased:
             switch (event.mouseButton.button) {
-                case sf::Mouse::Left: case sf::Mouse::Right:
+                case sf::Mouse::Left:
+                    XYset->scale *= XYset->Kscale;
+                    break;
+                case sf::Mouse::Right:
+                    XYset->scale /= XYset->Kscale;
                     break;
                 default:
                     break;
@@ -27,8 +31,10 @@ int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset
         case sf::Event::EventType::KeyPressed:
             switch (event.key.code) {
                 case sf::Keyboard::Space:
-                    dx = ((int)mouse_pos.x > WIDTH / 2) ? XYset->dx : -XYset->dx;
-                    dy = ((int)mouse_pos.y > HEIGHT/ 2) ? XYset->dy : -XYset->dy;
+                    XYset->is_active_mouse = !XYset->is_active_mouse;
+                    break;
+                case sf::Keyboard::F1:
+                    XYset->is_info = !XYset->is_info;
                     break;
                 case sf::Keyboard::Left : case sf::Keyboard::A:
                     dx -= XYset->dx;
@@ -50,17 +56,17 @@ int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset
             break;
     }
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (lab[XYset->py * M + XYset->px + dx] == OBJECTS[i].symbol && OBJECTS[i].can_go) {
+        if (lab[(int)XYset->py * M + (int)XYset->px + (int)dx] == OBJECTS[i].symbol && OBJECTS[i].can_go) {
             XYset->px += dx;
             break;
         }
     }
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (lab[(XYset->py + dy) * M + XYset->px] == OBJECTS[i].symbol && OBJECTS[i].can_go) {
+        if (lab[((int)XYset->py + (int)dy) * M + (int)XYset->px] == OBJECTS[i].symbol && OBJECTS[i].can_go) {
             XYset->py += dy;
             break;
         }
     }
-    lab[XYset->py * M + XYset->px] = SYM_OBJ_PLAYER;
+    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_PLAYER;
     return 0;
 }

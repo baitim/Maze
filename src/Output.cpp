@@ -33,8 +33,8 @@ void render_lab(sf::Uint8* pixels, char* lab, XYset_t* XYset)
 {
     int cx = XYset->px;
     int cy = XYset->py;
-    int step_x = wscale_render * wbyte2pix;
-    int step_y = hscale_render * hbyte2pix;
+    int step_x = XYset->scale * wscale_render * wbyte2pix;
+    int step_y = XYset->scale * hscale_render * hbyte2pix;
     int dy0 = HEIGHT / 2 - (int)(HEIGHT / 2 / step_y) * step_y;
     int dx0 = WIDTH  / 2 - (int)(WIDTH  / 2 / step_x) * step_x;
     for (int iy = 0; iy < HEIGHT; iy += step_y) {

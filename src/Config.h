@@ -19,20 +19,30 @@ const int STAY_IN_LIFE = 4;
 const int NEW_LIFE = 5;
 const int hscale_render = 4;
 const int wscale_render = 4;
+const int delay_dx_max = 3;
+const int delay_dy_max = 3;
 
 enum SYMBOLS_OBJECTS {
     SYM_OBJ_WALL    = '#',
     SYM_OBJ_ROAD    = ' ',
     SYM_OBJ_BORDER  = '*',
     SYM_OBJ_PLAYER  = 'P',
-    SYM_OBJ_COIN    = 'C',
+    SYM_OBJ_COIN    = 'C'
+};
+
+enum COUNT_OBJECTS_REN {
+    COUNT_OBJ_INF = -1,
+    COUNT_OBJ_PLAYER = 1,
+    COUNT_OBJ_COIN = 10
 };
 
 struct Object {
     SYMBOLS_OBJECTS symbol;
+    COUNT_OBJECTS_REN count;
     bool can_go;
     const char* name_src_file;
     char bytes_color[hbyte2pix * wbyte2pix * 4];
+    int* pos_num_free;
 };
 
 const int COUNT_OBJECTS = 5;

@@ -6,6 +6,6 @@
 #include "Config.h"
 #include "Control.h"
 
-void lab_create (char* lab, XYset_t* XYset);
+void lab_create(char* lab, XYset_t* XYset);
 
 #endif // LIFE_H

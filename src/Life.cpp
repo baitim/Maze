@@ -1,14 +1,23 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Life.h"
 
-void lab_gen    (char* lab);
-void lab_step   (char* lab);
-void lab_print  (char* lab);
-void lab_fill_empty(char* lab, XYset_t* XYset);
-void lab_write2file(char* lab, FILE* f);
+Object OBJECTS[COUNT_OBJECTS] = {
+    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png"},
+    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png"},
+    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png"},
+    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png"},
+    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png"}
+};
+
+static void lab_gen    (char* lab);
+static void lab_step   (char* lab);
+static void lab_print  (char* lab);
+static void lab_fill_empty(char* lab, XYset_t* XYset);
+static void lab_write2file(char* lab, FILE* f);
 
 void lab_gen(char* lab)
 {
@@ -64,24 +73,55 @@ void lab_fill_empty(char* lab, XYset_t* XYset)
     int count_free = 0;
     for (int i = 0; i < N; i++)
         for (int j = 0; j < M; j++)
-            if (lab[i * M + j] == SYM_OBJ_ROAD) count_free++;
+            for (int k = 0; k < COUNT_OBJECTS; k++)
+                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
+                    count_free++;
     
-    int number_i = rand() % count_free;
-    int number_o = rand() % count_free;
-    while (number_o == number_i)
-         number_o = rand() % count_free;
+    char* free_pos = (char*) malloc(count_free * sizeof(char));
+    memset(free_pos, 0, count_free);
+
+    for (int i = 0; i < COUNT_OBJECTS; i++) {
+        if (OBJECTS[i].count == COUNT_OBJ_INF) 
+            continue;
+
+        OBJECTS[i].pos_num_free = (int*) malloc(OBJECTS[i].count * sizeof(int));
+        for (int j = 0; j < OBJECTS[i].count; j++) {
+            int pos = rand() % count_free;
+            for (int ind = 0; ind < count_free; ind++) {
+                if (free_pos[(ind + pos) % count_free]) continue;
+                else {
+                    OBJECTS[i].pos_num_free[j] = (ind + pos) % count_free;
+                    free_pos[(ind + pos) % count_free] = 1;
+                    break;
+                }
+            }
+        }
+    }
 
     count_free = 0;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < M; j++) {
-            if (count_free == number_i) { lab[i * M + j] = SYM_OBJ_PLAYER; XYset->px = j; XYset->py = i; }
-            else if (count_free == number_o) lab[i * M + j] = SYM_OBJ_COIN;
-            if (lab[i * M + j] == SYM_OBJ_ROAD   || 
-                lab[i * M + j] == SYM_OBJ_PLAYER || 
-                lab[i * M + j] == SYM_OBJ_COIN) 
-                count_free++;
+            for (int k = 0; k < COUNT_OBJECTS; k++) {
+
+                for (int m = 0; m < OBJECTS[k].count; m++) {
+                    if (count_free == OBJECTS[k].pos_num_free[m]) {
+                        lab[i * M + j] = OBJECTS[k].symbol;
+
+                        if (OBJECTS[k].symbol == SYM_OBJ_PLAYER) {
+                            XYset->px = j;
+                            XYset->py = i;
+                        }
+                        break;
+                    }
+                }
+            }
+            for (int k = 0; k < COUNT_OBJECTS; k++)
+                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
+                    count_free++;
         }
     }
+
+    free(free_pos);
 }
 
 void lab_create(char* lab, XYset_t* XYset)

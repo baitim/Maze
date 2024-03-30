@@ -10,21 +10,26 @@
 int main()
 {
     srand(time(NULL));
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot");
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
     sf::Texture texture;
     texture.create(WIDTH, HEIGHT);
     sf::Sprite sprite(texture);
     sf::Uint8* pixels = new sf::Uint8[WIDTH * HEIGHT * 4]; // (RGBA)
     memset(pixels, 255, sizeof(sf::Uint8) * WIDTH * HEIGHT * 4);
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+    sf::Text POS_Text;
+    POS_Text.setFont(font);
+    POS_Text.setPosition(10, 10);
+    POS_Text.setCharacterSize(20);
+    POS_Text.setColor(sf::Color(255, 247, 0));
     
     objects_get();
 
-    XYset_t XYset = {.px = 0, .py = 0, .dx = 1, .dy = 1};
+    XYset_t XYset = {.dx = 1, .dy = 1, .scale = 0.7, .Kscale = 1.2};
 
     char lab[N * M];
     lab_create(lab, &XYset);
-
-    fprintf (stderr, "px = %d\tpy = %d\n", XYset.px, XYset.py);
 
     int cycle_counter = 0;
     bool image_saved = false;
@@ -42,6 +47,12 @@ int main()
         render_lab(pixels, lab, &XYset);
         texture.update(pixels);
         window.draw(sprite);
+
+        if (XYset.is_info) {
+            auto pos_string = "POS: " + std::to_string(XYset.px) + "  " + std::to_string(XYset.py);
+            POS_Text.setString(pos_string);
+            window.draw(POS_Text);
+        }
 
         window.display();
 
