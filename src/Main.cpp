@@ -21,35 +21,35 @@ int main()
     sf::Text POS_Text;
     POS_Text.setFont(font);
     POS_Text.setPosition(10, 10);
-    POS_Text.setCharacterSize(20);
+    POS_Text.setCharacterSize(32);
     POS_Text.setColor(sf::Color(252, 0, 17));
 
     objects_get();
 
     char lab[N * M];
-    XYset_t XYset = {.dx = 1, .dy = 1, .scale = 0.7, .Kscale = 1.2};
-    lab_create(lab, &XYset);
+    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1, .Kscale = 1.2};
+    lab_create(lab, &PlayerSet);
 
     int cycle_counter = 0;
     bool image_saved = false;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (control_event(&window, event, lab, &XYset)) {
+            if (control_event(&window, event, lab, &PlayerSet)) {
                 window.close();
                 break;
             }
         }
-        control_noevent(&window, lab, &XYset);
+        control_noevent(&window, lab, &PlayerSet);
 
         window.clear();
         
-        render_lab(pixels, lab, &XYset);
+        render_lab(pixels, lab, &PlayerSet);
         texture.update(pixels);
         window.draw(sprite);
 
-        if (XYset.is_info) {
-            auto pos_string = "POS: " + std::to_string(XYset.px) + "  " + std::to_string(XYset.py);
+        if (PlayerSet.is_info) {
+            auto pos_string = "POS: " + std::to_string(PlayerSet.px) + "  " + std::to_string(PlayerSet.py);
             POS_Text.setString(pos_string);
             window.draw(POS_Text);
         }

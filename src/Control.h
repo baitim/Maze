@@ -5,7 +5,7 @@
 
 #include "Config.h"
 
-struct XYset_t {
+struct PlayerSet_t {
     bool is_active_mouse;
     bool is_info;
     int px, py;
@@ -14,7 +14,7 @@ struct XYset_t {
     float scale, Kscale;
 };
 
-int control_event  (sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset);
-int control_noevent(sf::RenderWindow* window, char* lab, XYset_t* XYset);
+int control_event  (sf::RenderWindow* window, sf::Event event, char* lab, PlayerSet_t* PlayerSet);
+int control_noevent(sf::RenderWindow* window, char* lab, PlayerSet_t* PlayerSet);
 
 #endif // CONTROL_H

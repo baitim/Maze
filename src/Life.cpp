@@ -16,13 +16,13 @@ Object OBJECTS[COUNT_OBJECTS] = {
 static void lab_gen    (char* lab);
 static void lab_step   (char* lab);
 static void lab_print  (char* lab);
-static void lab_fill_empty  (char* lab, XYset_t* XYset);
+static void lab_fill_empty  (char* lab, PlayerSet_t* PlayerSet);
 static void lab_write2file  (char* lab, FILE* f);
 static void count_free_pos  (char* free_pos, int* count_free);
 static void select_free_pos (char* free_pos, int count_free);
-static void set_free_pos    (char* lab, char* free_pos, XYset_t* XYset);
+static void set_free_pos    (char* lab, char* free_pos, PlayerSet_t* PlayerSet);
 
-void lab_create(char* lab, XYset_t* XYset)
+void lab_create(char* lab, PlayerSet_t* PlayerSet)
 {
     lab_gen(lab);
 
@@ -30,7 +30,7 @@ void lab_create(char* lab, XYset_t* XYset)
     while (x++ < STEPS_GEN)
         lab_step(lab);
 
-    lab_fill_empty(lab, XYset);
+    lab_fill_empty(lab, PlayerSet);
 
     FILE *f = fopen("lab.txt", "w");
     lab_write2file(lab, f);
@@ -85,7 +85,7 @@ static void lab_step(char* lab)
     }
 }
 
-static void lab_fill_empty(char* lab, XYset_t* XYset)
+static void lab_fill_empty(char* lab, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
     count_free_pos(lab, &count_free);
@@ -94,7 +94,7 @@ static void lab_fill_empty(char* lab, XYset_t* XYset)
     memset(free_pos, 0, count_free);
 
     select_free_pos(free_pos, count_free);
-    set_free_pos(lab, free_pos, XYset);
+    set_free_pos(lab, free_pos, PlayerSet);
 
     free(free_pos);
 }
@@ -129,7 +129,7 @@ static void select_free_pos(char* free_pos, int count_free)
     }
 }
 
-static void set_free_pos(char* lab, char* free_pos, XYset_t* XYset)
+static void set_free_pos(char* lab, char* free_pos, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
     for (int i = 0; i < N; i++) {
@@ -151,8 +151,8 @@ static void set_free_pos(char* lab, char* free_pos, XYset_t* XYset)
                         lab[i * M + j] = OBJECTS[k].symbol;
 
                         if (OBJECTS[k].symbol == SYM_OBJ_PLAYER) {
-                            XYset->px = j;
-                            XYset->py = i;
+                            PlayerSet->px = j;
+                            PlayerSet->py = i;
                         }
                         was = true;
                         break;

@@ -6,6 +6,6 @@
 #include "Config.h"
 #include "Control.h"
 
-void render_lab(sf::Uint8* pixels, char* lab, XYset_t* XYset);
+void render_lab(sf::Uint8* pixels, char* lab, PlayerSet_t* PlayerSet);
 
 #endif // OUTPUT_H

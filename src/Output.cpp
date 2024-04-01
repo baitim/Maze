@@ -5,12 +5,12 @@
 static void paint_object(sf::Uint8* pixels, char* lab, int ix, int iy,
                          int iN, int iM, int step_x, int step_y);
 
-void render_lab(sf::Uint8* pixels, char* lab, XYset_t* XYset)
+void render_lab(sf::Uint8* pixels, char* lab, PlayerSet_t* PlayerSet)
 {
-    int cx = XYset->px;
-    int cy = XYset->py;
-    int step_x = XYset->scale * wscale_render * wbyte2pix;
-    int step_y = XYset->scale * hscale_render * hbyte2pix;
+    int cx = PlayerSet->px;
+    int cy = PlayerSet->py;
+    int step_x = PlayerSet->scale * wscale_render * wbyte2pix;
+    int step_y = PlayerSet->scale * hscale_render * hbyte2pix;
     int dy0 = HEIGHT / 2 - (int)(HEIGHT / 2 / step_y) * step_y;
     int dx0 = WIDTH  / 2 - (int)(WIDTH  / 2 / step_x) * step_x;
     for (int iy = 0; iy < HEIGHT; iy += step_y) {

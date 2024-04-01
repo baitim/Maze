@@ -24,5 +24,8 @@
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rat.gif" width="40%"></p>
 
+## Example
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/Maze.png" width="40%"></p>
+
 ## Support
 **This project is created by [baitim](https://t.me/bai_tim)**
