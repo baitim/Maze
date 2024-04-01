@@ -6,18 +6,35 @@
 #include "Life.h"
 
 Object OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png"},
-    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png"},
-    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png"},
-    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png"},
-    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png"}
+    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png",   {}},
+    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   {}},
+    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", {}},
+    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", {}},
+    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   {}}
 };
 
 static void lab_gen    (char* lab);
 static void lab_step   (char* lab);
 static void lab_print  (char* lab);
-static void lab_fill_empty(char* lab, XYset_t* XYset);
-static void lab_write2file(char* lab, FILE* f);
+static void lab_fill_empty  (char* lab, XYset_t* XYset);
+static void lab_write2file  (char* lab, FILE* f);
+static void count_free_pos  (char* free_pos, int* count_free);
+static void select_free_pos (char* free_pos, int count_free);
+static void set_free_pos    (char* lab, char* free_pos, XYset_t* XYset);
+
+void lab_create(char* lab, XYset_t* XYset)
+{
+    lab_gen(lab);
+
+    int x = 0;
+    while (x++ < STEPS_GEN)
+        lab_step(lab);
+
+    lab_fill_empty(lab, XYset);
+
+    FILE *f = fopen("lab.txt", "w");
+    lab_write2file(lab, f);
+}
 
 static void lab_gen(char* lab)
 {
@@ -71,15 +88,28 @@ static void lab_step(char* lab)
 static void lab_fill_empty(char* lab, XYset_t* XYset)
 {
     int count_free = 0;
-    for (int i = 0; i < N; i++)
-        for (int j = 0; j < M; j++)
-            for (int k = 0; k < COUNT_OBJECTS; k++)
-                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
-                    count_free++;
+    count_free_pos(lab, &count_free);
     
     char* free_pos = (char*) malloc(count_free * sizeof(char));
     memset(free_pos, 0, count_free);
 
+    select_free_pos(free_pos, count_free);
+    set_free_pos(lab, free_pos, XYset);
+
+    free(free_pos);
+}
+
+static void count_free_pos(char* lab, int* count_free)
+{
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < M; j++)
+            for (int k = 0; k < COUNT_OBJECTS; k++)
+                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
+                    (*count_free)++;
+}
+
+static void select_free_pos(char* free_pos, int count_free)
+{
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (OBJECTS[i].count == COUNT_OBJ_INF) 
             continue;
@@ -97,12 +127,25 @@ static void lab_fill_empty(char* lab, XYset_t* XYset)
             }
         }
     }
+}
 
-    count_free = 0;
+static void set_free_pos(char* lab, char* free_pos, XYset_t* XYset)
+{
+    int count_free = 0;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < M; j++) {
+            bool skip = false;
+            for (int k = 0; k < COUNT_OBJECTS; k++) {
+                if (lab[i * M + j] == OBJECTS[k].symbol && !OBJECTS[k].can_go) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) continue;
+
             for (int k = 0; k < COUNT_OBJECTS; k++) {
 
+                bool was = false;
                 for (int m = 0; m < OBJECTS[k].count; m++) {
                     if (count_free == OBJECTS[k].pos_num_free[m]) {
                         lab[i * M + j] = OBJECTS[k].symbol;
@@ -111,42 +154,15 @@ static void lab_fill_empty(char* lab, XYset_t* XYset)
                             XYset->px = j;
                             XYset->py = i;
                         }
+                        was = true;
                         break;
                     }
                 }
+                if (was) break;
             }
-            for (int k = 0; k < COUNT_OBJECTS; k++)
-                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
-                    count_free++;
+            count_free++;
         }
     }
-
-    free(free_pos);
-}
-
-void lab_create(char* lab, XYset_t* XYset)
-{
-    lab_gen(lab);
-
-    int x = 0;
-    while (x++ < STEPS_GEN)
-        lab_step(lab);
-
-    lab_fill_empty(lab, XYset);
-
-    FILE *f = fopen("lab.txt", "w");
-    lab_write2file(lab, f);
-}
-
-static void lab_print(char* lab)
-{
-    printf("\n");
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++)
-            printf("%c", lab[i * M + j]);
-        printf("\n");
-    }
-    printf("\n");
 }
 
 static void lab_write2file(char* lab, FILE* f) 
@@ -167,4 +183,15 @@ static void lab_write2file(char* lab, FILE* f)
             fprintf(f, "%c", lab[i * M + j]);
         fprintf(f, "\n");
     }
+}
+
+static void lab_print(char* lab)
+{
+    printf("\n");
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++)
+            printf("%c", lab[i * M + j]);
+        printf("\n");
+    }
+    printf("\n");
 }

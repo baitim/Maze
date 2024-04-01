@@ -33,19 +33,20 @@ enum SYMBOLS_OBJECTS {
 enum COUNT_OBJECTS_REN {
     COUNT_OBJ_INF = -1,
     COUNT_OBJ_PLAYER = 1,
-    COUNT_OBJ_COIN = 10
+    COUNT_OBJ_COIN = 50
 };
+
+const int COUNT_OBJECTS = 5;
 
 struct Object {
     SYMBOLS_OBJECTS symbol;
     COUNT_OBJECTS_REN count;
     bool can_go;
     const char* name_src_file;
+    SYMBOLS_OBJECTS neighbors[COUNT_OBJECTS];
     char bytes_color[hbyte2pix * wbyte2pix * 4];
     int* pos_num_free;
 };
-
-const int COUNT_OBJECTS = 5;
 extern Object OBJECTS[COUNT_OBJECTS];
 
 #endif // CONFIG_H

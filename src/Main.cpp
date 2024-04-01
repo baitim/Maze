@@ -23,12 +23,11 @@ int main()
     POS_Text.setPosition(10, 10);
     POS_Text.setCharacterSize(20);
     POS_Text.setColor(sf::Color(252, 0, 17));
-    
+
     objects_get();
 
-    XYset_t XYset = {.dx = 1, .dy = 1, .scale = 0.7, .Kscale = 1.2};
-
     char lab[N * M];
+    XYset_t XYset = {.dx = 1, .dy = 1, .scale = 0.7, .Kscale = 1.2};
     lab_create(lab, &XYset);
 
     int cycle_counter = 0;
@@ -44,7 +43,7 @@ int main()
         control_noevent(&window, lab, &XYset);
 
         window.clear();
-
+        
         render_lab(pixels, lab, &XYset);
         texture.update(pixels);
         window.draw(sprite);

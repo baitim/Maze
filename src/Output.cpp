@@ -2,6 +2,9 @@
 
 #include "Output.h"
 
+static void paint_object(sf::Uint8* pixels, char* lab, int ix, int iy,
+                         int iN, int iM, int step_x, int step_y);
+
 void render_lab(sf::Uint8* pixels, char* lab, XYset_t* XYset)
 {
     int cx = XYset->px;
@@ -16,22 +19,27 @@ void render_lab(sf::Uint8* pixels, char* lab, XYset_t* XYset)
         for (int ix = 0; ix < WIDTH; ix += step_x) {
             int dx = (dx0 + ix - WIDTH / 2) / step_x;
             int iM = MIN(M - 1, MAX(0, cx + dx));
-            for (int i = 0; i < COUNT_OBJECTS; i++) {
-                if (lab[iN * M + iM] == OBJECTS[i].symbol) {
-                    for (int y = 0; y < step_y; y++) {
-                        for (int x = 0; x < step_x; x++) {
-                            int y_col = y * hbyte2pix / step_y;
-                            int x_col = x * wbyte2pix / step_x;
-                            int r = OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4 + 0];
-                            int g = OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4 + 1];
-                            int b = OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4 + 2];
-                            sf::Uint8* pixel = &pixels[POS(ix + x, iy + y)];
-                            char* color = &OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4];
-                            memcpy(pixel, color, 3 * sizeof(char));
-                        }
-                    }
+
+            paint_object(pixels, lab, ix, iy, iN, iM, step_x, step_y);
+        }
+    }
+}
+
+static void paint_object(sf::Uint8* pixels, char* lab, int ix, int iy,
+                         int iN, int iM, int step_x, int step_y)
+{
+    for (int i = 0; i < COUNT_OBJECTS; i++) {
+        if (lab[iN * M + iM] == OBJECTS[i].symbol) {
+            for (int y = 0; y < step_y; y++) {
+                for (int x = 0; x < step_x; x++) {
+                    int y_col = y * hbyte2pix / step_y;
+                    int x_col = x * wbyte2pix / step_x;
+                    sf::Uint8* pixel = &pixels[POS(ix + x, iy + y)];
+                    char* color = &OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4];
+                    memcpy(pixel, color, 3 * sizeof(char));
                 }
             }
+            break;
         }
     }
 }
