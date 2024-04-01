@@ -2,7 +2,7 @@
 
 ## Description
 
- Implementation of the maze generated using the game life. Finding the minimum path in this maze between two points.
+ Implementation of the maze generated using the game life and sfml.
 
 ## How to use
 
@@ -25,4 +25,4 @@
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rat.gif" width="40%"></p>
 
 ## Support
-**This project is created by [bai_tim](https://github.com/bai_tim)**
+**This project is created by [baitim](https://t.me/bai_tim)**
