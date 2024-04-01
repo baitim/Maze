@@ -21,7 +21,7 @@ int main()
     sf::Text POS_Text;
     POS_Text.setFont(font);
     POS_Text.setPosition(10, 10);
-    POS_Text.setCharacterSize(32);
+    POS_Text.setCharacterSize(28);
     POS_Text.setColor(sf::Color(252, 0, 17));
 
     objects_get();

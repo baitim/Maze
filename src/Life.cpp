@@ -2,15 +2,18 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "Life.h"
 
 Object OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png",   {}},
-    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   {}},
-    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", {}},
-    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", {}},
-    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   {}}
+    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      false,  "images/Texture/TextureError.png",  0, {}},
+    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png",   0, {}},
+    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   0, {}},
+    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", 0, {}},
+    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", 0, {}},
+    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   0, {}},
+    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     false,  "images/Texture/TextureLamp.png",   2, {SYM_OBJ_WALL, SYM_OBJ_BORDER}}
 };
 
 static void lab_gen    (char* lab);
@@ -18,8 +21,9 @@ static void lab_step   (char* lab);
 static void lab_print  (char* lab);
 static void lab_fill_empty  (char* lab, PlayerSet_t* PlayerSet);
 static void lab_write2file  (char* lab, FILE* f);
-static void count_free_pos  (char* free_pos, int* count_free);
-static void select_free_pos (char* free_pos, int count_free);
+static void count_free_pos  (char* free_pos, int* count_free, int* frees_ind);
+static void select_free_pos (char* lab, char* free_pos, int count_free, int* frees_ind);
+static bool check_neighbors (Object* src_obj, char* lab, int real_pos);
 static void set_free_pos    (char* lab, char* free_pos, PlayerSet_t* PlayerSet);
 
 void lab_create(char* lab, PlayerSet_t* PlayerSet)
@@ -43,6 +47,7 @@ static void lab_gen(char* lab)
         for (int j = 0; j < M; j++) {
             if (byte_board(i, j))
                 lab[i * M + j] = SYM_OBJ_BORDER;
+
             int x = (rand() % 100 + 1);
             if (x >= CHANCE_LIFE)
                 lab[i * M + j] = SYM_OBJ_WALL;
@@ -64,7 +69,7 @@ static void lab_step(char* lab)
             int byte_val_neighbours = 0;
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
-                    if (!byte_valID(dx, dy))
+                    if (!byte_valid(dx, dy))
                         continue;
                     if (lab[(i + dx) * M + (j + dy)] == SYM_OBJ_WALL)
                         byte_val_neighbours++;
@@ -88,27 +93,32 @@ static void lab_step(char* lab)
 static void lab_fill_empty(char* lab, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
-    count_free_pos(lab, &count_free);
+    int* frees_ind = (int*) calloc(N * M,  sizeof(int));
+    count_free_pos(lab, &count_free, frees_ind);
     
-    char* free_pos = (char*) malloc(count_free * sizeof(char));
-    memset(free_pos, 0, count_free);
-
-    select_free_pos(free_pos, count_free);
+    char* free_pos = (char*) calloc(count_free, sizeof(char));
+    select_free_pos(lab, free_pos, count_free, frees_ind);
     set_free_pos(lab, free_pos, PlayerSet);
 
     free(free_pos);
+    free(frees_ind);
 }
 
-static void count_free_pos(char* lab, int* count_free)
+static void count_free_pos(char* lab, int* count_free, int* frees_ind)
 {
-    for (int i = 0; i < N; i++)
-        for (int j = 0; j < M; j++)
-            for (int k = 0; k < COUNT_OBJECTS; k++)
-                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) 
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
+            for (int k = 0; k < COUNT_OBJECTS; k++) {
+                if (lab[i * M + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
+                    frees_ind[*count_free] = i * M + j;
                     (*count_free)++;
+                }
+            }
+        }
+    }
 }
 
-static void select_free_pos(char* free_pos, int count_free)
+static void select_free_pos(char* lab, char* free_pos, int count_free, int* frees_ind)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (OBJECTS[i].count == COUNT_OBJ_INF) 
@@ -118,15 +128,37 @@ static void select_free_pos(char* free_pos, int count_free)
         for (int j = 0; j < OBJECTS[i].count; j++) {
             int pos = rand() % count_free;
             for (int ind = 0; ind < count_free; ind++) {
-                if (free_pos[(ind + pos) % count_free]) continue;
-                else {
-                    OBJECTS[i].pos_num_free[j] = (ind + pos) % count_free;
-                    free_pos[(ind + pos) % count_free] = 1;
+                int real_pos = (ind + pos) % count_free;
+                if (!free_pos[real_pos] && check_neighbors(&OBJECTS[i], lab, frees_ind[real_pos])) {
+                    OBJECTS[i].pos_num_free[j] = real_pos;
+                    free_pos[real_pos] = 1;
                     break;
                 }
             }
         }
     }
+}
+
+static bool check_neighbors(Object* src_obj, char* lab, int real_pos)
+{
+    if (src_obj->count_neighbors == 0) 
+        return true;
+
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (abs(dx) + abs(dy) != 1)
+                continue;
+            
+            for (int i = 0; i < src_obj->count_neighbors; i++) {
+                for (int j = 0; j < COUNT_OBJECTS; j++) {
+                    if (OBJECTS[j].symbol == lab[real_pos + dy * M + dx] &&
+                        OBJECTS[j].symbol == src_obj->neighbors[i])
+                        return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 static void set_free_pos(char* lab, char* free_pos, PlayerSet_t* PlayerSet)
@@ -144,7 +176,6 @@ static void set_free_pos(char* lab, char* free_pos, PlayerSet_t* PlayerSet)
             if (skip) continue;
 
             for (int k = 0; k < COUNT_OBJECTS; k++) {
-
                 bool was = false;
                 for (int m = 0; m < OBJECTS[k].count; m++) {
                     if (count_free == OBJECTS[k].pos_num_free[m]) {
