@@ -19,7 +19,7 @@ static void lab_print  (char* lab);
 static void lab_fill_empty(char* lab, XYset_t* XYset);
 static void lab_write2file(char* lab, FILE* f);
 
-void lab_gen(char* lab)
+static void lab_gen(char* lab)
 {
     srand(time(NULL));
     for (int i = 0; i < N; i++) {
@@ -35,7 +35,7 @@ void lab_gen(char* lab)
     }
 }
 
-void lab_step(char* lab)
+static void lab_step(char* lab)
 {
     char new_m[N * M];
     for (int i = 0; i < N; i++) {
@@ -68,7 +68,7 @@ void lab_step(char* lab)
     }
 }
 
-void lab_fill_empty(char* lab, XYset_t* XYset)
+static void lab_fill_empty(char* lab, XYset_t* XYset)
 {
     int count_free = 0;
     for (int i = 0; i < N; i++)
@@ -138,7 +138,7 @@ void lab_create(char* lab, XYset_t* XYset)
     lab_write2file(lab, f);
 }
 
-void lab_print(char* lab)
+static void lab_print(char* lab)
 {
     printf("\n");
     for (int i = 0; i < N; i++) {
@@ -149,7 +149,7 @@ void lab_print(char* lab)
     printf("\n");
 }
 
-void lab_write2file(char* lab, FILE* f) 
+static void lab_write2file(char* lab, FILE* f) 
 {
     int count_free = 0;
     for (int i = 0; i < N; i++) {

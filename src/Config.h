@@ -19,8 +19,8 @@ const int STAY_IN_LIFE = 4;
 const int NEW_LIFE = 5;
 const int hscale_render = 4;
 const int wscale_render = 4;
-const int delay_dx_max = 3;
-const int delay_dy_max = 3;
+const int delay_dx_max = 5;
+const int delay_dy_max = 5;
 
 enum SYMBOLS_OBJECTS {
     SYM_OBJ_WALL    = '#',

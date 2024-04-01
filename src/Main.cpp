@@ -22,7 +22,7 @@ int main()
     POS_Text.setFont(font);
     POS_Text.setPosition(10, 10);
     POS_Text.setCharacterSize(20);
-    POS_Text.setColor(sf::Color(255, 247, 0));
+    POS_Text.setColor(sf::Color(252, 0, 17));
     
     objects_get();
 
@@ -36,11 +36,12 @@ int main()
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (control(&window, event, lab, &XYset)) {
+            if (control_event(&window, event, lab, &XYset)) {
                 window.close();
                 break;
             }
         }
+        control_noevent(&window, lab, &XYset);
 
         window.clear();
 

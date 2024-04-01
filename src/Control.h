@@ -14,6 +14,7 @@ struct XYset_t {
     float scale, Kscale;
 };
 
-int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset);
+int control_event  (sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset);
+int control_noevent(sf::RenderWindow* window, char* lab, XYset_t* XYset);
 
 #endif // CONTROL_H

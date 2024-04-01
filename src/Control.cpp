@@ -1,18 +1,11 @@
 #include "Control.h"
 
-int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset)
+static void move_on_valid(char* lab, XYset_t* XYset, float dx, float dy);
+
+int control_event(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset)
 {
-    sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
     lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_ROAD;
     float dx = 0, dy = 0;
-    if (XYset->is_active_mouse) {
-        XYset->delay_dx = (XYset->delay_dx + 1) % delay_dx_max;
-        XYset->delay_dy = (XYset->delay_dy + 1) % delay_dy_max;
-        int XY_dx = XYset->dx * ((XYset->delay_dx == 0) ? 1 : 0);
-        int XY_dy = XYset->dy * ((XYset->delay_dy == 0) ? 1 : 0);
-        dx = ((int)mouse_pos.x > WIDTH / 2) ? XY_dx : -XY_dx;
-        dy = ((int)mouse_pos.y > HEIGHT/ 2) ? XY_dy : -XY_dy;
-    }
     switch (event.type) {
         case sf::Event::Closed:
             return 1;
@@ -55,6 +48,31 @@ int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset
         default:
             break;
     }
+    move_on_valid(lab, XYset, dx, dy);
+    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_PLAYER;
+    return 0;
+}
+
+int control_noevent(sf::RenderWindow* window, char* lab, XYset_t* XYset)
+{
+    sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
+    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_ROAD;
+    float dx = 0, dy = 0;
+    if (XYset->is_active_mouse) {
+        XYset->delay_dx = (XYset->delay_dx + 1) % delay_dx_max;
+        XYset->delay_dy = (XYset->delay_dy + 1) % delay_dy_max;
+        int XY_dx = XYset->dx * ((XYset->delay_dx == 0) ? 1 : 0);
+        int XY_dy = XYset->dy * ((XYset->delay_dy == 0) ? 1 : 0);
+        dx = ((int)mouse_pos.x > WIDTH / 2) ? XY_dx : -XY_dx;
+        dy = ((int)mouse_pos.y > HEIGHT/ 2) ? XY_dy : -XY_dy;
+    }
+    move_on_valid(lab, XYset, dx, dy);
+    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_PLAYER;
+    return 0;
+}
+
+static void move_on_valid(char* lab, XYset_t* XYset, float dx, float dy)
+{
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (lab[(int)XYset->py * M + (int)XYset->px + (int)dx] == OBJECTS[i].symbol && OBJECTS[i].can_go) {
             XYset->px += dx;
@@ -67,6 +85,4 @@ int control(sf::RenderWindow* window, sf::Event event, char* lab, XYset_t* XYset
             break;
         }
     }
-    lab[(int)XYset->py * M + (int)XYset->px] = SYM_OBJ_PLAYER;
-    return 0;
 }
