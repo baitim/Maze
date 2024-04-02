@@ -1,9 +1,18 @@
 #include <string.h>
 
 #include "Output.h"
+#include "Math.h"
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
                          int iN, int iM, int step_x, int step_y);
+
+void set_text(sf::Font* font, sf::Text* text, float x, float y)
+{
+    text->setFont(*font);
+    text->setPosition(x, y);
+    text->setCharacterSize(28);
+    text->setOutlineColor(sf::Color(252, 0, 17));
+}
 
 void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 {

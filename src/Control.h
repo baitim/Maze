@@ -1,5 +1,5 @@
-#ifndef CONTROL_H
-#define CONTROL_H
+#ifndef SRC_CONTROL_H
+#define SRC_CONTROL_H
 
 #include <SFML/Graphics.hpp>
 
@@ -17,4 +17,4 @@ struct PlayerSet_t {
 int control_event  (sf::Event event, char* lab, PlayerSet_t* PlayerSet);
 int control_noevent(sf::RenderWindow* window, char* lab, PlayerSet_t* PlayerSet);
 
-#endif // CONTROL_H
+#endif // SRC_CONTROL_H

@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "Life.h"
+#include "Math.h"
 
 Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_ERR,       COUNT_OBJ_INF,      false,  "images/Texture/TextureError.png",  0,   0, {}},

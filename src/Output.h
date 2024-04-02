@@ -1,12 +1,13 @@
-#ifndef OUTPUT_H
-#define OUTPUT_H
+#ifndef SRC_OUTPUT_H
+#define SRC_OUTPUT_H
 
 #include <SFML/Graphics.hpp>
 
 #include "Config.h"
 #include "Control.h"
 
-void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet);
+void set_text       (sf::Font* font, sf::Text* text, float x, float y);
+void render_lab     (sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet);
 void make_screenshot(sf::RenderWindow* window, const char* output_file);
 
-#endif // OUTPUT_H
+#endif // SRC_OUTPUT_H

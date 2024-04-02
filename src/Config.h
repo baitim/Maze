@@ -1,8 +1,6 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef SRC_CONFIG_H
+#define SRC_CONFIG_H
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define byte_board(x, y) ((x) == 0 || (y) == 0 || (x) == N - 1 || (y) == M - 1)
 #define byte_valid(dx, dy) (((dx) != 0) || ((dy) != 0))
 #define POS(x, y) ((y) * WIDTH + x) * 4
@@ -21,8 +19,9 @@ const int hscale_render = 4;
 const int wscale_render = 4;
 const int delay_dx_max = 5;
 const int delay_dy_max = 5;
-const int light_dist = 15;
-const int light_force = 1.4;
+const int light_dist = 20;
+const int light_force = 1.2;
+const int MAX_SIZE_INFO_STR = 100;
 
 struct Map_t {
     char lab[N * M];
@@ -43,7 +42,7 @@ enum COUNT_OBJECTS_REN {
     COUNT_OBJ_INF = -1,
     COUNT_OBJ_PLAYER = 1,
     COUNT_OBJ_COIN = 50,
-    COUNT_OBJ_LAMP = 100
+    COUNT_OBJ_LAMP = 70
 };
 
 const int COUNT_OBJECTS = 7;
@@ -61,4 +60,4 @@ struct Object {
 };
 extern Object OBJECTS[COUNT_OBJECTS];
 
-#endif // CONFIG_H
+#endif // SRC_CONFIG_H
