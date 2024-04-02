@@ -45,6 +45,7 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
                          int iN, int iM, int step_x, int step_y)
 {
+    bool is_obj = false;
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (map->lab[iN * M + iM] == OBJECTS[i].symbol) {
             for (int y = 0; y < step_y; y++) {
@@ -61,7 +62,14 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
                     }
                 }
             }
-            break;
+            is_obj = true;
+            return;
+        }
+    }
+    if (!is_obj) {
+        for (int y = 0; y < step_y; y++) {
+            sf::Uint8* pixel = &pixels[POS(ix, iy + y)];
+            memset(pixel, 0, 4 * sizeof(unsigned char) * step_x);
         }
     }
 }
