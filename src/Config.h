@@ -21,6 +21,13 @@ const int hscale_render = 4;
 const int wscale_render = 4;
 const int delay_dx_max = 5;
 const int delay_dy_max = 5;
+const int light_dist = 15;
+const int light_force = 1.4;
+
+struct Map_t {
+    char lab[N * M];
+    char light[N * M];
+};
 
 enum SYMBOLS_OBJECTS {
     SYM_OBJ_ERR     = '!',
@@ -46,6 +53,7 @@ struct Object {
     COUNT_OBJECTS_REN count;
     bool can_go;
     const char* name_src_file;
+    const int transparency;
     const int count_neighbors;
     SYMBOLS_OBJECTS neighbors[COUNT_OBJECTS];
     char bytes_color[hbyte2pix * wbyte2pix * 4];

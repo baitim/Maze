@@ -9,42 +9,45 @@
 
 int main()
 {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
+
+    //Window
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
     sf::Texture texture;
     texture.create(WIDTH, HEIGHT);
     sf::Sprite sprite(texture);
-    sf::Uint8* pixels = new sf::Uint8[WIDTH * HEIGHT * 4]; // (RGBA)
-    memset(pixels, 255, sizeof(sf::Uint8) * WIDTH * HEIGHT * 4);
+
+    // Pixels
+    sf::Uint8* pixels = (sf::Uint8*) calloc(sizeof(sf::Uint8), WIDTH * HEIGHT * 4); // (RGBA)
+
+    // TEXT
     sf::Font font;
     font.loadFromFile("arial.ttf");
     sf::Text POS_Text;
     POS_Text.setFont(font);
     POS_Text.setPosition(10, 10);
     POS_Text.setCharacterSize(28);
-    POS_Text.setColor(sf::Color(252, 0, 17));
+    POS_Text.setOutlineColor(sf::Color(252, 0, 17));
 
     objects_get();
 
-    char lab[N * M];
-    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1, .Kscale = 1.2};
-    lab_create(lab, &PlayerSet);
+    Map_t map = {};
+    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.2f};
+    lab_create(&map, &PlayerSet);
 
-    int cycle_counter = 0;
-    bool image_saved = false;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (control_event(&window, event, lab, &PlayerSet)) {
+            if (control_event(event, map.lab, &PlayerSet)) {
+                make_screenshot(&window, "images/Maze.png");
                 window.close();
                 break;
             }
         }
-        control_noevent(&window, lab, &PlayerSet);
+        control_noevent(&window, map.lab, &PlayerSet);
 
         window.clear();
-        
-        render_lab(pixels, lab, &PlayerSet);
+        render_lab(pixels, &map, &PlayerSet);
         texture.update(pixels);
         window.draw(sprite);
 
@@ -55,14 +58,6 @@ int main()
         }
 
         window.display();
-
-        if (cycle_counter == 3 && !image_saved) {
-            sf::Image image = window.capture();
-            image.saveToFile("images/Maze.png");
-            fprintf(stderr, "Image was saved to file\n");
-            image_saved = true;
-        }
-        cycle_counter = (cycle_counter + 1) % 100;
     }
 
     return 0;

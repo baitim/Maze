@@ -14,7 +14,7 @@ struct PlayerSet_t {
     float scale, Kscale;
 };
 
-int control_event  (sf::RenderWindow* window, sf::Event event, char* lab, PlayerSet_t* PlayerSet);
+int control_event  (sf::Event event, char* lab, PlayerSet_t* PlayerSet);
 int control_noevent(sf::RenderWindow* window, char* lab, PlayerSet_t* PlayerSet);
 
 #endif // CONTROL_H

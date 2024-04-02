@@ -6,6 +6,6 @@
 #include "Config.h"
 #include "Control.h"
 
-void lab_create(char* lab, PlayerSet_t* PlayerSet);
+void lab_create(Map_t* map, PlayerSet_t* PlayerSet);
 
 #endif // LIFE_H
