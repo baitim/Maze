@@ -67,10 +67,10 @@ static void set_light_lamp(Map_t* map, int pos)
 
             float dist = sqrtf((float)(dx * dx + dy * dy));
 
-            int was_light = map->light[pos + dy * M + dx];
-            int new_light = (unsigned char) (255 * (float)(1.f - MIN(1.f, dist / (float)light_dist / light_force)));
-            int new_light_norm = MAX(0, MIN(255, new_light));
-            map->light[pos + dy * M + dx] = MIN(255, was_light + new_light_norm);
+            unsigned char was_light = map->light[pos + dy * M + dx];
+            unsigned char new_light = (unsigned char) (255 * (float)(1.f - MIN(1.f, dist / (float)light_dist / light_force)));
+            unsigned char new_light_norm = MAX(0, MIN(255, new_light));
+            map->light[pos + dy * M + dx] = (unsigned char) MIN(255, was_light + new_light_norm);
         }
     }
 }
