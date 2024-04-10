@@ -148,10 +148,11 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
         }
     }
     dtor_queue(queue, queue);
-    
+
     int is_path_exist = set_shortest_path(distance, map, PlayerSet, mouse_pos, &map->path);
     if (!is_path_exist) {
         clean_path(&map->path);
+        map->path.path_target = BYTE_WIDTH * mouse_pos->y + mouse_pos->x;
         return;
     }
 

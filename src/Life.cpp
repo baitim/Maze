@@ -247,13 +247,14 @@ static void select_free_pos(char* lab, char* free_pos, int count_free, int* free
         OBJECTS[i].pos_num_free = (int*) malloc((size_t)OBJECTS[i].count * sizeof(int));
         for (int j = 0; j < OBJECTS[i].count; j++) {
             int pos = rand() % count_free;
-            for (int ind = 0; ind < count_free; ind++) {
-                int real_pos = (ind + pos) % count_free;
-                if (!free_pos[real_pos] && check_neighbors(&OBJECTS[i], lab, frees_ind[real_pos])) {
-                    OBJECTS[i].pos_num_free[j] = real_pos;
-                    free_pos[real_pos] = 1;
+
+            while (1) {
+                if (!free_pos[pos] && check_neighbors(&OBJECTS[i], lab, frees_ind[pos])) {
+                    OBJECTS[i].pos_num_free[j] = pos;
+                    free_pos[pos] = 1;
                     break;
                 }
+                pos = rand() % count_free;
             }
         }
     }
