@@ -102,6 +102,8 @@ error:
 
 finally:
     free_all(pixels, pos_string, fps_string);
+
+    printf(print_lblue("# Bye!\n"));
     return 0;
 }
 
