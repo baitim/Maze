@@ -5,11 +5,11 @@
 #include "FindPath.h"
 #include "Math.h"
 
-struct Queue_t {
+typedef struct Queue_t_ {
     int x;
     int y;
-    struct Queue_t* next;
-};
+    struct Queue_t_* next;
+} Queue_t;
 
 static int  enqueue     (Queue_t** queue, int x, int y);
 static int  dequeue     (Queue_t** queue, int* x, int* y);

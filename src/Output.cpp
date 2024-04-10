@@ -1,7 +1,9 @@
 #include <string.h>
 
+#include "ANSI_colors.h"
 #include "Output.h"
 #include "Math.h"
+#include "ProcessCmd.h"
 
 static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
                        int iN, int iM, int step_x, int step_y, unsigned char* color);
@@ -11,6 +13,17 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
 
 static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
                               int iN, int iM, int step_x, int step_y, unsigned char* color);
+
+void print_help()
+{
+    for (int i = 0; i < COUNT_OPTIONS; i++) {
+        int count_print = 0;
+        printf(print_lgreen("%s%n"), OPTIONS[i].name, &count_print);
+        for (int j = 0; j <= MAX_CMD_COMMAND_SIZE - count_print; j++)
+            printf(" ");
+        printf(print_lgreen("%s\n"), OPTIONS[i].description);
+    }
+}
 
 void set_text(sf::Font* font, sf::Text* text, float x, float y)
 {

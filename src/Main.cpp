@@ -2,17 +2,35 @@
 #include <string.h>
 #include <chrono>
 
+#include "ANSI_colors.h"
 #include "Life.h"
 #include "Input.h"
+#include "Errors.h"
 #include "Output.h"
+#include "ProcessCmd.h"
 #include "Control.h"
 
-void set_text(sf::Font* font, sf::Text* text, float x, float y);
 void free_all(sf::Uint8* pixels, char* pos_string, char* fps_string);
 
-int main()
+int main(int argc, const char *argv[])
 {
+    printf(print_lblue("# Implementation of mini game.\n"
+                       "# (c) Baidiusenov Timur, 2024\n\n"));
+
     srand((unsigned int)time(NULL));
+    ErrorCode error = ERROR_NO;
+    CmdInputData_t cmd_data = {};
+
+    error = input_cmd(argc, argv, &cmd_data);
+    if (error) return error;
+
+    if (cmd_data.is_help)
+        print_help();
+
+    if (!cmd_data.is_output_file) {
+        error = ERROR_INVALID_FILE;
+        return error;
+    }
 
     //Window
     sf::RenderWindow window(sf::VideoMode(PIX_WIDTH, PIX_HEIGHT), "Maze");
@@ -40,7 +58,7 @@ int main()
 
     Map_t map = {};
     PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 2.f};
-    lab_create(&map, &PlayerSet);
+    lab_create(&map, &PlayerSet, cmd_data.output_file);
 
     while (window.isOpen()) {
         auto clock_begin = std::chrono::steady_clock::now();
@@ -77,6 +95,12 @@ int main()
         window.display();
     }
 
+    goto finally;
+
+error:
+    err_dump(error);
+
+finally:
     free_all(pixels, pos_string, fps_string);
     return 0;
 }

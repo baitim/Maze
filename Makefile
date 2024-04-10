@@ -20,22 +20,28 @@ CPP      = g++
 LINKER   = g++
 rm       = rm -rf
 
+TXTDIR   = txt
 SRCDIR   = src
 OBJDIR   = obj
 
+TXT_FILES = --output_file $(TXTDIR)/lab.txt
 TARGET   = maze
 
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-$(TARGET): $(OBJDIR) $(OBJECTS)
+$(TARGET): $(TXTDIR) $(OBJDIR) $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
 
+$(TXTDIR):
+	@mkdir $(TXTDIR)
+	@echo "Created txt directory!"
+
 $(OBJDIR):
 	@mkdir $(OBJDIR)
-	@echo "Created obj dir!!"
+	@echo "Created obj directory!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 	@$(CPP) $(CFLAGS) -c $< -o $@
@@ -46,3 +52,7 @@ clean:
 	@$(rm) $(OBJECTS)
 	@$(rm) $(TARGET)
 	@echo "Cleanup complete!"
+
+.PHONY: run
+run:
+	./$(TARGET) $(TXT_FILES)

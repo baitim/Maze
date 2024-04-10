@@ -32,7 +32,7 @@
 
 * Use <code>Left mouse button</code> to control movement by mouse clicking
 
-* Use <code>А1</code> to open or close information
+* Use <code>F1</code> to open or close information
 
 ## Example
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/MazeExample.png" width="80%"></p>

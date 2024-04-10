@@ -23,22 +23,22 @@ const int light_dist = 20;
 const int light_force = 1.2;
 const int MAX_SIZE_INFO_STR = 100;
 
-struct Path_t {
+typedef struct Path_t_ {
     int path[BYTE_HEIGHT * BYTE_WIDTH];
     int count;
     int passed;
     int path_target;
     int path_exist;
-};
+} Path_t;
 
-struct Map_t {
+typedef struct Map_t_ {
     char lab[BYTE_HEIGHT * BYTE_WIDTH];
     unsigned char col[BYTE_HEIGHT * BYTE_WIDTH * 3];
     unsigned char light[BYTE_HEIGHT * BYTE_WIDTH];
     Path_t path;
-};
+} Map_t;
 
-enum SYMBOLS_OBJECTS {
+typedef enum ObjectsSymbols_ {
     SYM_OBJ_ERR     = '!',
     SYM_OBJ_WALL    = '#',
     SYM_OBJ_ROAD    = ' ',
@@ -49,25 +49,25 @@ enum SYMBOLS_OBJECTS {
     SYM_OBJ_PATH    = '`',
     SYM_OBJ_DEST    = 'V',
     SYM_OBJ_IMDEST  = 'X'
-};
+} ObjectsSymbols;
 
-enum COUNT_OBJECTS_REN {
+typedef enum CountObject2Render_ {
     COUNT_OBJ_INF = -1,
     COUNT_OBJ_PLAYER = 1,
     COUNT_OBJ_COIN = 50,
     COUNT_OBJ_LAMP = 70
-};
+} CountObject2Render;
 
 const int COUNT_OBJECTS = 10;
 
 struct Object {
-    SYMBOLS_OBJECTS symbol;
-    COUNT_OBJECTS_REN count;
+    ObjectsSymbols symbol;
+    CountObject2Render count;
     bool can_go;
     const char* name_src_file;
     const int transparency;
     const int count_neighbors;
-    SYMBOLS_OBJECTS neighbors[COUNT_OBJECTS];
+    ObjectsSymbols neighbors[COUNT_OBJECTS];
     unsigned char bytes_color[hbyte2pix * wbyte2pix * 4];
     int* pos_num_free;
 };

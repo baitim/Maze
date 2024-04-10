@@ -34,7 +34,7 @@ static void select_free_pos (char* lab, char* free_pos, int count_free, int* fre
 static bool check_neighbors (Object* src_obj, char* lab, int pos);
 static void set_free_pos    (char* lab, PlayerSet_t* PlayerSet);
 
-void lab_create(Map_t* map, PlayerSet_t* PlayerSet)
+void lab_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
 {
     memset(map->lab,   0, sizeof(char) * BYTE_HEIGHT * BYTE_WIDTH);
     memset(map->light, 0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH);
@@ -52,7 +52,7 @@ void lab_create(Map_t* map, PlayerSet_t* PlayerSet)
 
     // set_hills(map);
 
-    FILE *f = fopen("lab.txt", "w");
+    FILE *f = fopen(output_file, "w");
     lab_write2file(map->lab, f);
 }
 
