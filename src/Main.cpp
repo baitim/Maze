@@ -15,12 +15,12 @@ int main()
     srand((unsigned int)time(NULL));
 
     //Window
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
+    sf::RenderWindow window(sf::VideoMode(PIX_WIDTH, PIX_HEIGHT), "Maze");
     sf::Texture texture;
-    texture.create(WIDTH, HEIGHT);
+    texture.create(PIX_WIDTH, PIX_HEIGHT);
     sf::Sprite sprite(texture);
     // Pixels
-    sf::Uint8* pixels = (sf::Uint8*) calloc(sizeof(sf::Uint8), WIDTH * HEIGHT * 4); // (RGBA)
+    sf::Uint8* pixels = (sf::Uint8*) calloc(sizeof(sf::Uint8), PIX_WIDTH * PIX_HEIGHT * 4); // (RGBA)
     // FONT
     sf::Font font;
     font.loadFromFile("arial.ttf");
@@ -39,7 +39,7 @@ int main()
     objects_get();
 
     Map_t map = {};
-    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.2f};
+    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 2.f};
     lab_create(&map, &PlayerSet);
 
     while (window.isOpen()) {
@@ -47,14 +47,14 @@ int main()
 
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (control_event(event, map.lab, &PlayerSet)) {
+            if (control_event(&window, &map, &PlayerSet, &event)) {
                 make_screenshot(&window, "images/Maze.png");
                 window.close();
                 free_all(pixels, pos_string, fps_string);
                 return 0;
             }
         }
-        control_noevent(&window, map.lab, &PlayerSet);
+        control_noevent(&window, &map, &PlayerSet);
 
         window.clear();
         render_lab(pixels, &map, &PlayerSet);
@@ -69,7 +69,7 @@ int main()
 
             auto elapsed_ms = std::chrono::duration<double,std::milli>(clock_end - clock_begin).count();
             double fps = 100.f / elapsed_ms;
-            snprintf(fps_string, len_fps_string, "fps: %.f ms", fps);
+            snprintf(fps_string, len_fps_string, "fps: %.f", fps);
             FPS_Text.setString(fps_string);
             window.draw(FPS_Text);
         }

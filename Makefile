@@ -29,9 +29,13 @@ SOURCES  := $(wildcard $(SRCDIR)/*.cpp)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJDIR) $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
+
+$(OBJDIR):
+	@mkdir $(OBJDIR)
+	@echo "Created obj dir!!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 	@$(CPP) $(CFLAGS) -c $< -o $@

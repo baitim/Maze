@@ -14,5 +14,6 @@ double fast_pow     (double x, int st);
 int is_double_equal (double x, double y);
 int is_double_less  (double x, double y);
 int is_double_above (double x, double y);
+void swap_ints      (int* a, int* b);
 
 #endif // SRC_MATH_H

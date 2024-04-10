@@ -35,3 +35,10 @@ int is_double_above(double x, double y)
 {
     return (y - x <= EPSILON);
 }
+
+void swap_ints(int* a, int* b)
+{
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
