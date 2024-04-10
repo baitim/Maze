@@ -3,6 +3,7 @@
 #include "ANSI_colors.h"
 #include "Output.h"
 #include "Math.h"
+#include "Life.h"
 #include "ProcessCmd.h"
 
 static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
@@ -58,18 +59,15 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 
             bool outside = outside_x || outside_y;
             paint_object(outside, pixels, map, ix, iy, iN, iM, step_x, step_y, color);
+            if (!outside &&
+                map->path.path[iN * BYTE_WIDTH + iM] > 0 &&
+                map->path.path_target != iN * BYTE_WIDTH + iM &&
+                map->path.passed < map->path.path[iN * BYTE_WIDTH + iM]) {
 
-            for (int ind_path = 0; ind_path < map->path.count; ind_path++) {
-                if (map->path.path[ind_path] == iN * BYTE_WIDTH + iM &&
-                    map->path.path[ind_path] != map->path.path_target &&
-                    map->path.passed <= ind_path) {
-
-                    paint_path(pixels, map, ix, iy, iN, iM, step_x, step_y, color);
-                    break;
-                }
+                paint_path(pixels, map, ix, iy, iN, iM, step_x, step_y, color);
             }
-
-            if (map->path.path_target == iN * BYTE_WIDTH + iM &&
+            if (!outside &&
+                map->path.path_target == iN * BYTE_WIDTH + iM &&
                 ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist))
 
                 paint_path_target(map->path.path_exist, pixels, map, ix, iy, iN, iM,
@@ -88,11 +86,11 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
                 for (int x = 0; x < step_x; x++) {
                     int y_col = y * hbyte2pix / step_y;
                     int x_col = x * wbyte2pix / step_x;
-                    sf::Uint8* pixel = &pixels[POS(ix + x, iy + y)];
+                    sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
                     if (outside) {
                         memset(pixel, 0, 4 * sizeof(unsigned char));
                     } else {
-                        memcpy(color, &OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4], 4 * sizeof(unsigned char));
+                        memcpy(color, &OBJECTS[i].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
 
                         color[0] = MAX(0, MIN(255, color[0] + map->col[(iN * BYTE_WIDTH + iM) * 3 + 0]));
                         color[1] = MAX(0, MIN(255, color[1] + map->col[(iN * BYTE_WIDTH + iM) * 3 + 1]));
@@ -109,7 +107,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
     }
     if (!is_obj) {
         for (int y = 0; y < step_y; y++) {
-            sf::Uint8* pixel = &pixels[POS(ix, iy + y)];
+            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
             memset(pixel, 0, 4 * sizeof(unsigned char) * step_x);
         }
     }
@@ -127,9 +125,9 @@ static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
         for (int x = 0; x < step_x; x++) {
             int y_col = y * hbyte2pix / step_y;
             int x_col = x * wbyte2pix / step_x;
-            sf::Uint8* pixel = &pixels[POS(ix + x, iy + y)];
+            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
 
-            memcpy(color, &OBJECTS[ind_obj_path].bytes_color[(y_col * wbyte2pix + x_col) * 4], 4 * sizeof(unsigned char));
+            memcpy(color, &OBJECTS[ind_obj_path].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
 
             if (color[0] == 255 && color[1] == 255 && color[2] == 255)
                 continue;
@@ -156,9 +154,9 @@ static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int i
         for (int x = 0; x < step_x; x++) {
             int y_col = y * hbyte2pix / step_y;
             int x_col = x * wbyte2pix / step_x;
-            sf::Uint8* pixel = &pixels[POS(ix + x, iy + y)];
+            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
 
-            memcpy(color, &OBJECTS[ind_obj_path_target].bytes_color[(y_col * wbyte2pix + x_col) * 4], 4 * sizeof(unsigned char));
+            memcpy(color, &OBJECTS[ind_obj_path_target].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
 
             if (color[0] == 255 && color[1] == 255 && color[2] == 255)
                 continue;

@@ -1,4 +1,4 @@
-CFLAGS   = # -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++\
+CFLAGS   = -O3 # -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++\
 -Waggressive-loop-optimizations -Wc++14-compat -Wmissing-declarations -Wcast-align\
 -Wcast-qual -Wchar-subscripts -Wconditionally-supported -Wconversion -Wctor-dtor-privacy\
 -Wempty-body -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat-signedness\

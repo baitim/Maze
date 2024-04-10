@@ -33,6 +33,12 @@ static void count_free_pos  (char* lab, int* count_free, int* frees_ind);
 static void select_free_pos (char* lab, char* free_pos, int count_free, int* frees_ind);
 static bool check_neighbors (Object* src_obj, char* lab, int pos);
 static void set_free_pos    (char* lab, PlayerSet_t* PlayerSet);
+static int is_obj_on_border (int x, int y);
+
+int pos_in_pix_window(int x, int y)
+{
+    return (y * PIX_WIDTH + x) * 4;
+}
 
 void lab_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
 {
@@ -165,7 +171,7 @@ static void lab_gen(char* lab)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            if (byte_board(i, j))
+            if (is_obj_on_border(i, j))
                 lab[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
 
             int x = (rand() % 100 + 1);
@@ -182,7 +188,7 @@ static void lab_step(char* lab)
     char new_m[BYTE_HEIGHT * BYTE_WIDTH];
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            if (byte_board(i, j)) {
+            if (is_obj_on_border(i, j)) {
                 new_m[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
                 continue;
             }
@@ -335,4 +341,9 @@ static void lab_write2file(char* lab, FILE* f)
             fprintf(f, "%c", lab[i * BYTE_WIDTH + j]);
         fprintf(f, "\n");
     }
+}
+
+static int is_obj_on_border(int x, int y)
+{
+    return (x == 0 || y == 0 || x == BYTE_HEIGHT - 1 || y == BYTE_WIDTH - 1);
 }

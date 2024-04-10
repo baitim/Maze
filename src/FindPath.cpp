@@ -94,8 +94,8 @@ static int set_shortest_path(int* distance, Map_t* map, PlayerSet_t* PlayerSet,
         int old_x = x;
         int old_y = y;
         is_step_par(distance, map->lab, &x, &y);
-        path->path[path->count] = BYTE_WIDTH * old_y + old_x;
         path->count++;
+        path->path[BYTE_WIDTH * old_y + old_x] = path->count;
         if (old_x == x && old_y == y) return 0;
     }
     return 1;
@@ -110,8 +110,7 @@ static void dtor_queue(Queue_t* queue, Queue_t* head)
 
 void clean_path(Path_t* path)
 {
-    for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++)
-        path->path[i] = -1;
+    memset(path->path, 0, BYTE_HEIGHT * BYTE_WIDTH * sizeof(int));
         
     path->count       = 0;
     path->passed      = 0;
@@ -156,6 +155,7 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
         return;
     }
 
-    for (int i = 0; i < (map->path.count + 1) / 2; i++)
-        swap_ints(&map->path.path[i], &map->path.path[map->path.count - i - 1]);
+    for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++)
+        if (map->path.path[i] != 0)
+            map->path.path[i] = map->path.count - map->path.path[i] + 1;
 }

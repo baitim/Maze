@@ -105,12 +105,30 @@ static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_
 
     map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     
-    PlayerSet->delay_path = (PlayerSet->delay_path + 1) % delay_dy_path;
+    PlayerSet->delay_path = (PlayerSet->delay_path + 1) % delay_path;
 
     if (PlayerSet->delay_path == 1) {
-        PlayerSet->px = map->path.path[map->path.passed] % BYTE_WIDTH;
-        PlayerSet->py = map->path.path[map->path.passed] / BYTE_WIDTH;
+        int new_x = 0;
+        int new_y = 0;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (abs(dx) + abs(dy) != 1)
+                    continue;
+                
+                int x = PlayerSet->px + dx;
+                int y = PlayerSet->py + dy;
+                if (y * BYTE_WIDTH + x < 0)
+                    continue;
+
+                if (map->path.path[y * BYTE_WIDTH + x] == map->path.passed + 1) {
+                    new_x = x;
+                    new_y = y;
+                }
+            }
+        }
         map->path.passed++;
+        PlayerSet->px = new_x;
+        PlayerSet->py = new_y;
     }
 
     if (map->path.passed == map->path.count) {

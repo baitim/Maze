@@ -1,9 +1,6 @@
 #ifndef SRC_CONFIG_H
 #define SRC_CONFIG_H
 
-#define byte_board(x, y) ((x) == 0 || (y) == 0 || (x) == BYTE_HEIGHT - 1 || (y) == BYTE_WIDTH - 1)
-#define POS(x, y) ((y) * PIX_WIDTH + x) * 4
-
 const int hbyte2pix = 4;
 const int wbyte2pix = 4;
 const int PIX_HEIGHT = 1000;
@@ -18,7 +15,7 @@ const int hscale_render = 4;
 const int wscale_render = 4;
 const int delay_dx_max = 7;
 const int delay_dy_max = 7;
-const int delay_dy_path = 5;
+const int delay_path = 6;
 const int light_dist = 20;
 const int light_force = 1.2;
 const int MAX_SIZE_INFO_STR = 100;
