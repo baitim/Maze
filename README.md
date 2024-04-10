@@ -4,7 +4,7 @@
 
  Implementation of the maze generated using the game life and sfml.
 
-## How to use
+## How to run
 
 1. Clone <br>
     write <code>git clone https://github.com/baitim/Maze.git</code> in terminal
@@ -18,11 +18,34 @@
 4. Run <br>
     write <code>./maze</code> in terminal
 
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rat.gif" width="40%"></p>
+## How to use
+
+* Use 
+    * <code>W</code> or <code>&uarr;</code> to move forward
+    * <code>S</code> or <code>&darr;</code> to move back
+    * <code>D</code> or <code>&rarr;</code> to move right
+    * <code>A</code> or <code>&larr;</code> to move left
+
+* Use <code>Z</code> and <code>X</code> to change viewing angle
+
+* Use <code>Space</code> to control movement by mouse moving
+
+* Use <code>Left mouse button</code> to control movement by mouse clicking
+
+* Use <code>А1</code> to open or close information
 
 ## Example
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/Maze.png" width="80%"></p>
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/MazeExample.png" width="80%"></p>
+
+## Features
+
+* Random generated map
+* Convenient addition of new objects
+* Linking objects to others
+* Realization of light
+* Finding the shortest path when controlling the mouse
+
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="50%"></p>
 
 ## Support
 **This project is created by [baitim](https://t.me/bai_tim)**
