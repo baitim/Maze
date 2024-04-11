@@ -6,14 +6,19 @@
 #include "Life.h"
 #include "ProcessCmd.h"
 
-static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int iN, int iM, int step_x, int step_y, unsigned char* color);
-
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                         int iN, int iM, int step_x, int step_y, unsigned char* color);
+                         int iN, int iM,int step_x, int step_y, int chunk_x, int chunk_y);
+
+static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
+                       int step_x, int step_y, int chunk_x, int chunk_y);
 
 static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                              int iN, int iM, int step_x, int step_y, unsigned char* color);
+                              int step_x, int step_y, int chunk_x, int chunk_y);
+
+static void paint_obj_chunk(sf::Uint8* pixels, int ix, int iy, int step_x, int step_y,
+                            int chunk_x, int chunk_y, int obj_ind, int (*skip)(unsigned char*));
+
+static int  obj_skip_white(unsigned char* color);
 
 void print_help()
 {
@@ -38,7 +43,6 @@ void set_text(sf::Font* font, sf::Text* text, float x, float y)
 
 void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 {
-    unsigned char* color = (unsigned char*) calloc(3, sizeof(unsigned char));
     int cx = PlayerSet->px;
     int cy = PlayerSet->py;
     int step_x = (int) (PlayerSet->scale * wscale_render * wbyte2pix);
@@ -46,13 +50,22 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
     int dy0 = PIX_HEIGHT / 2 - (PIX_HEIGHT / 2 / step_y) * step_y;
     int dx0 = PIX_WIDTH  / 2 - (PIX_WIDTH  / 2 / step_x) * step_x;
 
+    int chunk_y = step_y;
     for (int iy = 0; iy < PIX_HEIGHT; iy += step_y) {
+        if (iy + step_y >= PIX_HEIGHT) 
+            chunk_y = PIX_HEIGHT - iy;
+        
         bool outside_y = false;
         int dy = (dy0 + iy - PIX_HEIGHT / 2) / step_y;
         int iN = cy + dy;
         if (iN != MIN(BYTE_HEIGHT - 1, MAX(0, iN)))
             outside_y = true;
+
+        int chunk_x = step_x;
         for (int ix = 0; ix < PIX_WIDTH; ix += step_x) {
+            if (ix + step_x >= PIX_WIDTH) 
+                chunk_x = PIX_WIDTH - ix;
+
             bool outside_x = false;
             int dx = (dx0 + ix - PIX_WIDTH / 2) / step_x;
             int iM = cx + dx;
@@ -60,34 +73,36 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
                 outside_x = true;
 
             bool outside = outside_x || outside_y;
-            paint_object(outside, pixels, map, ix, iy, iN, iM, step_x, step_y, color);
+            paint_object(outside, pixels, map, ix, iy, iN, iM, step_x, step_y, chunk_x, chunk_y);
             if (!outside &&
                 map->path.path[iN * BYTE_WIDTH + iM] > 0 &&
                 map->path.path_target != iN * BYTE_WIDTH + iM &&
                 map->path.passed < map->path.path[iN * BYTE_WIDTH + iM]) {
 
-                paint_path(pixels, map, ix, iy, iN, iM, step_x, step_y, color);
+                paint_path(pixels, map, ix, iy, step_x, step_y, chunk_x, chunk_y);
             }
             if (!outside &&
                 map->path.path_target == iN * BYTE_WIDTH + iM &&
-                ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist))
+                ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist)) {
 
-                paint_path_target(map->path.path_exist, pixels, map, ix, iy, iN, iM,
-                                  step_x, step_y, color);
+                paint_path_target(map->path.path_exist, pixels, map, ix, iy, step_x, step_y, chunk_x, chunk_y);
+            }
         }
     }
 }
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                         int iN, int iM, int step_x, int step_y, unsigned char* color)
+                         int iN, int iM, int step_x, int step_y, int chunk_x, int chunk_y)
 {
+    unsigned char color[3] = {};
     bool is_obj = false;
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (map->map[iN * BYTE_WIDTH + iM] == OBJECTS[i].symbol) {
-            for (int y = 0; y < step_y; y++) {
-                for (int x = 0; x < step_x; x++) {
+            for (int y = 0; y < chunk_y; y++) {
+                for (int x = 0; x < chunk_x; x++) {
                     int y_col = y * hbyte2pix / step_y;
                     int x_col = x * wbyte2pix / step_x;
+
                     sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
                     if (outside) {
                         memset(pixel, 0, 4 * sizeof(unsigned char));
@@ -98,7 +113,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
                         color[1] = MAX(0, MIN(255, color[1] + map->col[(iN * BYTE_WIDTH + iM) * 3 + 1]));
                         color[2] = MAX(0, MIN(255, color[2] + map->col[(iN * BYTE_WIDTH + iM) * 3 + 2]));
 
-                        memcpy(pixel, color, 3 * sizeof(unsigned char));
+                        memcpy(pixel, color, 3 * sizeof(sf::Uint8));
                         pixel[3] = map->light[iN * BYTE_WIDTH + iM];
                     }
                 }
@@ -110,41 +125,24 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
     if (!is_obj) {
         for (int y = 0; y < step_y; y++) {
             sf::Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
-            memset(pixel, 0, 4 * sizeof(unsigned char) * step_x);
+            memset(pixel, 0, 4 * sizeof(sf::Uint8) * step_x);
         }
     }
 }
 
 static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int iN, int iM, int step_x, int step_y, unsigned char* color)
+                       int step_x, int step_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path = -1;
     for (int i = 0; i < COUNT_OBJECTS; i++)
         if (OBJECTS[i].symbol == SYM_OBJ_PATH)
             ind_obj_path = i;
 
-    for (int y = 0; y < step_y; y++) {
-        for (int x = 0; x < step_x; x++) {
-            int y_col = y * hbyte2pix / step_y;
-            int x_col = x * wbyte2pix / step_x;
-            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
-
-            memcpy(color, &OBJECTS[ind_obj_path].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
-
-            if (color[0] == 255 && color[1] == 255 && color[2] == 255)
-                continue;
-    
-            color[0] = MAX(0, MIN(255, color[0] + pixel[0]));
-            color[1] = MAX(0, MIN(255, color[1] + pixel[1]));
-            color[2] = MAX(0, MIN(255, color[2] + pixel[2]));
-
-            memcpy(pixel, color, 3 * sizeof(unsigned char));
-        }
-    }
+    paint_obj_chunk(pixels, ix, iy, step_x, step_y, chunk_x, chunk_y, ind_obj_path, obj_skip_white);
 }
 
 static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                              int iN, int iM, int step_x, int step_y, unsigned char* color)
+                              int step_x, int step_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path_target = -1;
     for (int i = 0; i < COUNT_OBJECTS; i++)
@@ -152,24 +150,36 @@ static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int i
             (!is_exist && OBJECTS[i].symbol == SYM_OBJ_IMDEST))
             ind_obj_path_target = i;
 
-    for (int y = 0; y < step_y; y++) {
-        for (int x = 0; x < step_x; x++) {
+    paint_obj_chunk(pixels, ix, iy, step_x, step_y, chunk_x, chunk_y, ind_obj_path_target, obj_skip_white);
+}
+
+static void paint_obj_chunk(sf::Uint8* pixels, int ix, int iy, int step_x, int step_y,
+                            int chunk_x, int chunk_y, int obj_ind, int (*skip)(unsigned char*))
+{
+    unsigned char color[3] = {};
+    for (int y = 0; y < chunk_y; y++) {
+        for (int x = 0; x < chunk_x; x++) {
             int y_col = y * hbyte2pix / step_y;
             int x_col = x * wbyte2pix / step_x;
             sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
 
-            memcpy(color, &OBJECTS[ind_obj_path_target].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
+            memcpy(color, &OBJECTS[obj_ind].bytes_color[(y_col * wbyte2pix + x_col) * 4], 3 * sizeof(unsigned char));
 
-            if (color[0] == 255 && color[1] == 255 && color[2] == 255)
+            if (skip(color))
                 continue;
     
             color[0] = MAX(0, MIN(255, color[0] + pixel[0]));
             color[1] = MAX(0, MIN(255, color[1] + pixel[1]));
             color[2] = MAX(0, MIN(255, color[2] + pixel[2]));
 
-            memcpy(pixel, color, 3 * sizeof(unsigned char));
+            memcpy(pixel, color, 3 * sizeof(sf::Uint8));
         }
     }
+}
+
+static int obj_skip_white(unsigned char* color)
+{
+    return (color[0] == 255 && color[1] == 255 && color[2] == 255);
 }
 
 void make_screenshot(sf::RenderWindow* window, const char* output_file)

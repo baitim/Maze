@@ -24,8 +24,8 @@ int main(int argc, const char *argv[])
     sf::Font font;
     sf::Text POS_Text, FPS_Text;
 
-    Map_t map = {};
-    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 2.f};
+    Map_t map = {.path = {.path_target = -1}};
+    PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.3f};
 
     error = input_cmd(argc, argv, &cmd_data);
     if (error) return error;
