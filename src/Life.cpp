@@ -15,16 +15,16 @@ Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", 0,   0, {}},
     {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   10,  0, {}},
     {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     false,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL, SYM_OBJ_BORDER}},
-    {SYM_OBJ_PATH,      COUNT_OBJ_INF,      true,   "images/Texture/TexturePath.png",    10,  0, {}},
-    {SYM_OBJ_DEST,      COUNT_OBJ_INF,      true,   "images/Texture/TextureDest.png",   10,  0, {}},
-    {SYM_OBJ_IMDEST,    COUNT_OBJ_INF,      true,   "images/Texture/TextureImDest.png", 10,  0, {}}
+    {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     true,   "images/Texture/TexturePath.png",   0,   0, {}},
+    {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     true,   "images/Texture/TextureDest.png",   0,   0, {}},
+    {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     true,   "images/Texture/TextureImDest.png", 0,   0, {}}
 };
 
 static void lab_gen    (char* map);
 static void lab_step   (char* map);
 static void lab_fill_empty  (char* map, PlayerSet_t* PlayerSet);
 static void set_lighting    (Map_t* map);
-static void set_light_lamp  (Map_t* map, int pos);
+static void set_light_lamp  (Map_t* map, int x, int y);
 static void set_hills       (Map_t* map);
 static void paint_subgraph  (int v, int color, int* colors, char* map);
 static int  get_center_graph(int v, int color, int* colors, char* map);
@@ -33,7 +33,7 @@ static void count_free_pos  (char* map, int* count_free, int* frees_ind);
 static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind);
 static bool check_neighbors (Object* src_obj, char* map, int pos);
 static void set_free_pos    (char* map, PlayerSet_t* PlayerSet);
-static int is_obj_on_border (int x, int y);
+static int  is_obj_on_border(int x, int y);
 
 int pos_in_pix_window(int x, int y)
 {
@@ -132,24 +132,30 @@ static void paint_subgraph(int v, int color, int* colors, char* map)
 
 static void set_lighting(Map_t* map)
 {
+    int ind_obj_lamp = -1;
+    for (int i = 0; i < COUNT_OBJECTS; i++)
+        if (OBJECTS[i].symbol == SYM_OBJ_LAMP)
+            ind_obj_lamp = i;
+
     memset(map->light, 20, BYTE_HEIGHT * BYTE_WIDTH);
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (OBJECTS[k].symbol == map->map[i * BYTE_WIDTH + j] &&
-                    OBJECTS[k].symbol == SYM_OBJ_LAMP) {
-                    set_light_lamp(map, i * BYTE_WIDTH + j);
-                }
+            if (OBJECTS[ind_obj_lamp].symbol == map->map[i * BYTE_WIDTH + j]) {
+                set_light_lamp(map, j, i);
             }
         }
     }
 }
 
-static void set_light_lamp(Map_t* map, int pos)
+static void set_light_lamp(Map_t* map, int x, int y)
 {
+    int pos = y * BYTE_WIDTH + x;
     for (int dy = -light_dist; dy <= light_dist; dy++) {
         for (int dx = -light_dist; dx <= light_dist; dx++) {
             if (((pos + dy * BYTE_WIDTH + dx) < 0) || ((pos + dy * BYTE_WIDTH + dx) > BYTE_HEIGHT * BYTE_WIDTH -1))
+                continue;
+
+            if (dx + x >= BYTE_WIDTH || dx + x < 0)
                 continue;
 
             float dist = sqrtf((float)(dx * dx + dy * dy));

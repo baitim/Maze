@@ -49,10 +49,11 @@ typedef enum ObjectsSymbols_ {
 } ObjectsSymbols;
 
 typedef enum CountObject2Render_ {
-    COUNT_OBJ_INF = -1,
-    COUNT_OBJ_PLAYER = 1,
-    COUNT_OBJ_COIN = 50,
-    COUNT_OBJ_LAMP = 70
+    COUNT_OBJ_INF =    -1,
+    COUNT_OBJ_PLAYER =  1,
+    COUNT_OBJ_COIN =   50,
+    COUNT_OBJ_LAMP =   70,
+    COUNT_OBJ_PATH =   -2
 } CountObject2Render;
 
 const int COUNT_OBJECTS = 10;
