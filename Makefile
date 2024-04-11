@@ -20,20 +20,29 @@ CPP      = g++
 LINKER   = g++
 rm       = rm -rf
 
+IMAGEDIR = images
 TXTDIR   = txt
 SRCDIR   = src
 OBJDIR   = obj
 
-TXT_FILES = --output_file $(TXTDIR)/map.txt
+CMD_FLAGS = --map_txt_file $(TXTDIR)/map.txt\
+			--screenshot_file $(IMAGEDIR)/Maze.png\
+			--font_file arial.ttf\
+			--help
+
 TARGET   = maze
 
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-$(TARGET): $(TXTDIR) $(OBJDIR) $(OBJECTS)
+$(TARGET): $(IMAGEDIR) $(TXTDIR) $(OBJDIR) $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
+
+$(IMAGEDIR):
+	@mkdir $(IMAGEDIR)
+	@echo "Created images directory!"
 
 $(TXTDIR):
 	@mkdir $(TXTDIR)
@@ -55,4 +64,4 @@ clean:
 
 .PHONY: run
 run:
-	./$(TARGET) $(TXT_FILES)
+	@./$(TARGET) $(CMD_FLAGS)

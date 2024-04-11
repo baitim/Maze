@@ -8,10 +8,11 @@
 #include "Errors.h"
 
 ErrorCode window_prepare(sf::RenderWindow* window, sf::Texture* texture, sf::Sprite* sprite,
-                         sf::Uint8** pixels, sf::Font* font, sf::Text* POS_Text, sf::Text* FPS_Text);
+                         sf::Uint8** pixels, sf::Font* font, char* font_file,
+                         sf::Text* POS_Text, sf::Text* FPS_Text);
 
 ErrorCode window_default_loop(sf::RenderWindow* window, sf::Texture* texture, sf::Sprite* sprite,
                               sf::Uint8* pixels, sf::Text* POS_Text, sf::Text* FPS_Text,
-                              Map_t* map, PlayerSet_t* PlayerSet);
+                              Map_t* map, PlayerSet_t* PlayerSet, char* screenshot_file);
 
 #endif // SRC_WINDOW_H

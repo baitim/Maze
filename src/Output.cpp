@@ -17,6 +17,7 @@ static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int i
 
 void print_help()
 {
+    printf(print_lgreen("flag:                     info:\n"));
     for (int i = 0; i < COUNT_OPTIONS; i++) {
         int count_print = 0;
         printf(print_lgreen("%s%n"), OPTIONS[i].name, &count_print);

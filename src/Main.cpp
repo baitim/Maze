@@ -38,13 +38,14 @@ int main(int argc, const char *argv[])
 
     objects_get();
 
-    lab_create(&map, &PlayerSet, cmd_data.output_file);
+    lab_create(&map, &PlayerSet, cmd_data.map_txt_file);
 
-    error = window_prepare(&window, &texture, &sprite, &pixels, &font, &POS_Text, &FPS_Text);
+    error = window_prepare(&window, &texture, &sprite, &pixels, &font, cmd_data.font_file,
+                           &POS_Text, &FPS_Text);
     if (error) return error;
 
     error = window_default_loop(&window, &texture, &sprite, pixels, &POS_Text, &FPS_Text,
-                                &map, &PlayerSet);
+                                &map, &PlayerSet, cmd_data.screenshot_file);
     if (error) return error;
 
     goto finally;
@@ -54,6 +55,6 @@ error:
 
 finally:
 
-    printf(print_lblue("# Bye!\n"));
+    printf(print_lblue("\n# Bye!\n"));
     return 0;
 }
