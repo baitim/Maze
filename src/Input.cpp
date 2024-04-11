@@ -1,3 +1,4 @@
+#include <SFML/Graphics.hpp>
 #include <string.h>
 
 #include "Input.h"

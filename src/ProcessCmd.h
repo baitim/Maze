@@ -19,7 +19,8 @@ typedef struct CmdLineOption_t_ {
 } CmdLineOption_t;
 
 ErrorCode input_cmd         (int argc, const char* argv[], CmdInputData_t* cmd_data);
-ErrorCode help_callback     (const char* /*argv*/[], CmdInputData_t* data);
+ErrorCode help_callback     (const char* /*argv*/[], CmdInputData_t* data);\
+ErrorCode cmd_data_verify   (CmdInputData_t* cmd_data);
 ErrorCode cmd_data_delete   (CmdInputData_t* cmd_data);
 ErrorCode output_file_callback(const char* argv[], CmdInputData_t* data);
 

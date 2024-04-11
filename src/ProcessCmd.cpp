@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,9 +11,6 @@ const int COUNT_OPTIONS = sizeof(OPTIONS) / sizeof(CmdLineOption_t);
 
 ErrorCode input_cmd(int argc, const char* argv[], CmdInputData_t* cmd_data)
 {
-    assert(argv);
-    assert(cmd_data);
-
     ErrorCode err = ERROR_NO;
 
     for (int i = 0; i < argc; i++) {
@@ -44,6 +40,14 @@ ErrorCode output_file_callback(const char* argv[], CmdInputData_t* data)
 ErrorCode help_callback(const char* /*argv*/[], CmdInputData_t* data)
 {
     data->is_help = 1;
+
+    return ERROR_NO;
+}
+
+ErrorCode cmd_data_verify(CmdInputData_t* cmd_data)
+{
+    if (!cmd_data->is_output_file)
+        return ERROR_INVALID_FILE;
 
     return ERROR_NO;
 }
