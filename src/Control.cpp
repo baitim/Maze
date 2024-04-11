@@ -65,6 +65,11 @@ int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, 
         default:
             break;
     }
+    if (dx != 0 || dy != 0) {
+        clean_path(&map->path);
+        PlayerSet->is_active_mouse_click = false;
+        PlayerSet->is_active_mouse_move = false;
+    }
     move_on_valid(map->map, PlayerSet, dx, dy);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
     return 0;
