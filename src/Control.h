@@ -18,6 +18,6 @@ struct PlayerSet_t {
 
 int control_event  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, sf::Event* event);
 int control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
-int passable_object(char* lab, int x, int y);
+int passable_object(char* map, int x, int y);
 
 #endif // SRC_CONTROL_H

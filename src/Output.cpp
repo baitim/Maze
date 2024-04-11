@@ -81,7 +81,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
 {
     bool is_obj = false;
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (map->lab[iN * BYTE_WIDTH + iM] == OBJECTS[i].symbol) {
+        if (map->map[iN * BYTE_WIDTH + iM] == OBJECTS[i].symbol) {
             for (int y = 0; y < step_y; y++) {
                 for (int x = 0; x < step_x; x++) {
                     int y_col = y * hbyte2pix / step_y;

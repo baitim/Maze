@@ -3,7 +3,7 @@
 
 #include "Errors.h"
 
-const int MAX_CMD_COMMAND_SIZE = 100;
+const int MAX_CMD_COMMAND_SIZE = 30;
 
 typedef struct CmdInputData_t_ {
     int is_output_file;

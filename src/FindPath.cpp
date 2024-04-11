@@ -52,13 +52,13 @@ static int dequeue(Queue_t** queue, int* x, int* y)
     }
 }
 
-static int step(int* distance, char* lab, int x, int y, Queue_t** queue)
+static int step(int* distance, char* map, int x, int y, Queue_t** queue)
 {
     int len = distance[BYTE_WIDTH * y + x];
     int* new_queue;
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
-            if ((abs(dx) + abs(dy) == 1) && passable_object(lab, x + dx, y + dy)) {
+            if ((abs(dx) + abs(dy) == 1) && passable_object(map, x + dx, y + dy)) {
                 new_queue = (int*)&distance[BYTE_WIDTH * (y + dy) + x + dx];
 
                 if (*new_queue == 0 || *new_queue > len + 1) {
@@ -71,11 +71,11 @@ static int step(int* distance, char* lab, int x, int y, Queue_t** queue)
     return 0;
 }
 
-static void is_step_par(int* distance, char* lab, int* x, int* y)
+static void is_step_par(int* distance, char* map, int* x, int* y)
 {
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
-            if (((dx != 0) || (dy != 0)) && passable_object(lab, *x + dx, *y + dy)) {
+            if (((dx != 0) || (dy != 0)) && passable_object(map, *x + dx, *y + dy)) {
                 if (distance[BYTE_WIDTH * (*y + dy) + *x + dx] + 1 - distance[BYTE_WIDTH * (*y) + *x] == 0) {
                     *x += dx;
                     *y += dy;
@@ -93,7 +93,7 @@ static int set_shortest_path(int* distance, Map_t* map, PlayerSet_t* PlayerSet,
     while (x != PlayerSet->px || y != PlayerSet->py) {
         int old_x = x;
         int old_y = y;
-        is_step_par(distance, map->lab, &x, &y);
+        is_step_par(distance, map->map, &x, &y);
         path->count++;
         path->path[BYTE_WIDTH * old_y + old_x] = path->count;
         if (old_x == x && old_y == y) return 0;
@@ -126,7 +126,7 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
 
     map->path.path_target = BYTE_WIDTH * mouse_pos->y + mouse_pos->x;
     
-    if (!passable_object(map->lab, mouse_pos->x, mouse_pos->y))
+    if (!passable_object(map->map, mouse_pos->x, mouse_pos->y))
         return;
 
     int distance[BYTE_HEIGHT * BYTE_WIDTH] = {};
@@ -140,7 +140,7 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
                 map->path.path_exist = 1;
                 break;
             }
-            step(distance, map->lab, x, y, &queue);
+            step(distance, map->map, x, y, &queue);
         } else {
             map->path.path_exist = 0;
             return;

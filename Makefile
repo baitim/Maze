@@ -24,7 +24,7 @@ TXTDIR   = txt
 SRCDIR   = src
 OBJDIR   = obj
 
-TXT_FILES = --output_file $(TXTDIR)/lab.txt
+TXT_FILES = --output_file $(TXTDIR)/map.txt
 TARGET   = maze
 
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp)

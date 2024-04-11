@@ -47,5 +47,13 @@
 
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="50%"></p>
 
+## CMD commands
+
+* <code> --output_file "file" </code> <br>
+    choose file to save map, default: <code>txt/map.txt</code>
+
+* <code> --help </code> <br>
+    Write help
+
 ## Support
 **This project is created by [baitim](https://t.me/bai_tim)**

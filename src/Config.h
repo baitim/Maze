@@ -29,7 +29,7 @@ typedef struct Path_t_ {
 } Path_t;
 
 typedef struct Map_t_ {
-    char lab[BYTE_HEIGHT * BYTE_WIDTH];
+    char map[BYTE_HEIGHT * BYTE_WIDTH];
     unsigned char col[BYTE_HEIGHT * BYTE_WIDTH * 3];
     unsigned char light[BYTE_HEIGHT * BYTE_WIDTH];
     Path_t path;

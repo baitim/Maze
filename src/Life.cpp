@@ -20,19 +20,19 @@ Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_IMDEST,    COUNT_OBJ_INF,      true,   "images/Texture/TextureImDest.png", 10,  0, {}}
 };
 
-static void lab_gen    (char* lab);
-static void lab_step   (char* lab);
-static void lab_fill_empty  (char* lab, PlayerSet_t* PlayerSet);
+static void lab_gen    (char* map);
+static void lab_step   (char* map);
+static void lab_fill_empty  (char* map, PlayerSet_t* PlayerSet);
 static void set_lighting    (Map_t* map);
 static void set_light_lamp  (Map_t* map, int pos);
 static void set_hills       (Map_t* map);
-static void paint_subgraph  (int v, int color, int* colors, char* lab);
-static int  get_center_graph(int v, int color, int* colors, char* lab);
-static void lab_write2file  (char* lab, FILE* f);
-static void count_free_pos  (char* lab, int* count_free, int* frees_ind);
-static void select_free_pos (char* lab, char* free_pos, int count_free, int* frees_ind);
-static bool check_neighbors (Object* src_obj, char* lab, int pos);
-static void set_free_pos    (char* lab, PlayerSet_t* PlayerSet);
+static void paint_subgraph  (int v, int color, int* colors, char* map);
+static int  get_center_graph(int v, int color, int* colors, char* map);
+static void lab_write2file  (char* map, FILE* f);
+static void count_free_pos  (char* map, int* count_free, int* frees_ind);
+static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind);
+static bool check_neighbors (Object* src_obj, char* map, int pos);
+static void set_free_pos    (char* map, PlayerSet_t* PlayerSet);
 static int is_obj_on_border (int x, int y);
 
 int pos_in_pix_window(int x, int y)
@@ -42,24 +42,24 @@ int pos_in_pix_window(int x, int y)
 
 void lab_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
 {
-    memset(map->lab,   0, sizeof(char) * BYTE_HEIGHT * BYTE_WIDTH);
+    memset(map->map,   0, sizeof(char) * BYTE_HEIGHT * BYTE_WIDTH);
     memset(map->light, 0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH);
     memset(map->col,   0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH * 3);
     
-    lab_gen(map->lab);
+    lab_gen(map->map);
 
     int x = 0;
     while (x++ < STEPS_GEN)
-        lab_step(map->lab);
+        lab_step(map->map);
 
-    lab_fill_empty(map->lab, PlayerSet);
+    lab_fill_empty(map->map, PlayerSet);
 
     set_lighting(map);
 
     // set_hills(map);
 
     FILE *f = fopen(output_file, "w");
-    lab_write2file(map->lab, f);
+    lab_write2file(map->map, f);
 }
 
 static void set_hills(Map_t* map)
@@ -69,11 +69,11 @@ static void set_hills(Map_t* map)
 
 
     for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++) {
-        if (map->lab[i] != SYM_OBJ_WALL)
+        if (map->map[i] != SYM_OBJ_WALL)
             continue;
 
         if (!colors[i]) {
-            paint_subgraph(i, color, colors, map->lab);
+            paint_subgraph(i, color, colors, map->map);
             color++;
         }
     }
@@ -81,11 +81,11 @@ static void set_hills(Map_t* map)
     int* visit_color = (int*) calloc(sizeof(int), color);
     int* centers =     (int*) calloc(sizeof(int), color);
     for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++) {
-        if (map->lab[i] != SYM_OBJ_WALL || colors[i] == 0)
+        if (map->map[i] != SYM_OBJ_WALL || colors[i] == 0)
             continue;
 
         if (!visit_color[colors[i]]) {
-            int new_center = get_center_graph(i, color, colors, map->lab);
+            int new_center = get_center_graph(i, color, colors, map->map);
             fprintf(stderr, "from =   %d\t%d\n", i          / BYTE_WIDTH, i          % BYTE_WIDTH);
             fprintf(stderr, "center = %d\t%d\n", new_center / BYTE_WIDTH, new_center % BYTE_WIDTH);
 
@@ -98,23 +98,23 @@ static void set_hills(Map_t* map)
     free(colors);
 }
 
-static int get_center_graph(int v, int color, int* colors, char* lab)
+static int get_center_graph(int v, int color, int* colors, char* map)
 {
     // for (int dy = -1; dy <= 1; dy++) {
     //     for (int dx = -1; dx <= 1; dx++) {
     //         if (abs(dx) + abs(dy) != 1)
     //             continue;
             
-    //         if (lab[v + dy * BYTE_WIDTH + dx] != SYM_OBJ_WALL)
+    //         if (map[v + dy * BYTE_WIDTH + dx] != SYM_OBJ_WALL)
     //             continue;
 
-    //         paint_subgraph(lab[v + dy * BYTE_WIDTH + dx], color, colors, lab);
+    //         paint_subgraph(map[v + dy * BYTE_WIDTH + dx], color, colors, map);
     //     }
     // }
     return 0;
 }
 
-static void paint_subgraph(int v, int color, int* colors, char* lab)
+static void paint_subgraph(int v, int color, int* colors, char* map)
 {
     colors[v] = color;
     for (int dy = -1; dy <= 1; dy++) {
@@ -122,10 +122,10 @@ static void paint_subgraph(int v, int color, int* colors, char* lab)
             if (abs(dx) + abs(dy) != 1)
                 continue;
             
-            if (lab[v + dy * BYTE_WIDTH + dx] != SYM_OBJ_WALL)
+            if (map[v + dy * BYTE_WIDTH + dx] != SYM_OBJ_WALL)
                 continue;
 
-            paint_subgraph(lab[v + dy * BYTE_WIDTH + dx], color, colors, lab);
+            paint_subgraph(map[v + dy * BYTE_WIDTH + dx], color, colors, map);
         }
     }
 }
@@ -136,7 +136,7 @@ static void set_lighting(Map_t* map)
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
             for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (OBJECTS[k].symbol == map->lab[i * BYTE_WIDTH + j] &&
+                if (OBJECTS[k].symbol == map->map[i * BYTE_WIDTH + j] &&
                     OBJECTS[k].symbol == SYM_OBJ_LAMP) {
                     set_light_lamp(map, i * BYTE_WIDTH + j);
                 }
@@ -167,23 +167,23 @@ static void set_light_lamp(Map_t* map, int pos)
     }
 }
 
-static void lab_gen(char* lab)
+static void lab_gen(char* map)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
             if (is_obj_on_border(i, j))
-                lab[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
+                map[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
 
             int x = (rand() % 100 + 1);
             if (x >= CHANCE_LIFE)
-                lab[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
+                map[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
             else
-                lab[i * BYTE_WIDTH + j] = SYM_OBJ_ROAD;
+                map[i * BYTE_WIDTH + j] = SYM_OBJ_ROAD;
         }
     }
 }
 
-static void lab_step(char* lab)
+static void lab_step(char* map)
 {
     char new_m[BYTE_HEIGHT * BYTE_WIDTH];
     for (int i = 0; i < BYTE_HEIGHT; i++) {
@@ -197,13 +197,13 @@ static void lab_step(char* lab)
                 for (int dy = -1; dy <= 1; dy++) {
                     if (!(((dx) != 0) || ((dy) != 0)))
                         continue;
-                    if (lab[(i + dx) * BYTE_WIDTH + (j + dy)] == SYM_OBJ_WALL)
+                    if (map[(i + dx) * BYTE_WIDTH + (j + dy)] == SYM_OBJ_WALL)
                         byte_val_neighbours++;
                 }
             }
             if (byte_val_neighbours >= NEW_LIFE)
                 new_m[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
-            else if (lab[i * BYTE_WIDTH + j] == SYM_OBJ_WALL && byte_val_neighbours >= STAY_IN_LIFE)
+            else if (map[i * BYTE_WIDTH + j] == SYM_OBJ_WALL && byte_val_neighbours >= STAY_IN_LIFE)
                 new_m[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
             else 
                 new_m[i * BYTE_WIDTH + j] = SYM_OBJ_ROAD;
@@ -211,31 +211,31 @@ static void lab_step(char* lab)
     }
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            lab[i * BYTE_WIDTH + j] = new_m[i * BYTE_WIDTH + j];
+            map[i * BYTE_WIDTH + j] = new_m[i * BYTE_WIDTH + j];
         }
     }
 }
 
-static void lab_fill_empty(char* lab, PlayerSet_t* PlayerSet)
+static void lab_fill_empty(char* map, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
     int* frees_ind = (int*) calloc(BYTE_HEIGHT * BYTE_WIDTH,  sizeof(int));
-    count_free_pos(lab, &count_free, frees_ind);
+    count_free_pos(map, &count_free, frees_ind);
     
     char* free_pos = (char*) calloc((size_t)count_free, sizeof(char));
-    select_free_pos(lab, free_pos, count_free, frees_ind);
-    set_free_pos(lab, PlayerSet);
+    select_free_pos(map, free_pos, count_free, frees_ind);
+    set_free_pos(map, PlayerSet);
 
     free(free_pos);
     free(frees_ind);
 }
 
-static void count_free_pos(char* lab, int* count_free, int* frees_ind)
+static void count_free_pos(char* map, int* count_free, int* frees_ind)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
             for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (lab[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
+                if (map[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
                     frees_ind[*count_free] = i * BYTE_WIDTH + j;
                     (*count_free)++;
                 }
@@ -244,7 +244,7 @@ static void count_free_pos(char* lab, int* count_free, int* frees_ind)
     }
 }
 
-static void select_free_pos(char* lab, char* free_pos, int count_free, int* frees_ind)
+static void select_free_pos(char* map, char* free_pos, int count_free, int* frees_ind)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (OBJECTS[i].count == COUNT_OBJ_INF) 
@@ -255,7 +255,7 @@ static void select_free_pos(char* lab, char* free_pos, int count_free, int* free
             int pos = rand() % count_free;
 
             while (1) {
-                if (!free_pos[pos] && check_neighbors(&OBJECTS[i], lab, frees_ind[pos])) {
+                if (!free_pos[pos] && check_neighbors(&OBJECTS[i], map, frees_ind[pos])) {
                     OBJECTS[i].pos_num_free[j] = pos;
                     free_pos[pos] = 1;
                     break;
@@ -266,7 +266,7 @@ static void select_free_pos(char* lab, char* free_pos, int count_free, int* free
     }
 }
 
-static bool check_neighbors(Object* src_obj, char* lab, int pos)
+static bool check_neighbors(Object* src_obj, char* map, int pos)
 {
     if (src_obj->count_neighbors == 0) 
         return true;
@@ -278,7 +278,7 @@ static bool check_neighbors(Object* src_obj, char* lab, int pos)
             
             for (int i = 0; i < src_obj->count_neighbors; i++) {
                 for (int j = 0; j < COUNT_OBJECTS; j++) {
-                    if (OBJECTS[j].symbol == lab[pos + dy * BYTE_WIDTH + dx] &&
+                    if (OBJECTS[j].symbol == map[pos + dy * BYTE_WIDTH + dx] &&
                         OBJECTS[j].symbol == src_obj->neighbors[i])
                         return true;
                 }
@@ -288,14 +288,14 @@ static bool check_neighbors(Object* src_obj, char* lab, int pos)
     return false;
 }
 
-static void set_free_pos(char* lab, PlayerSet_t* PlayerSet)
+static void set_free_pos(char* map, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
             bool skip = false;
             for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (lab[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && !OBJECTS[k].can_go) {
+                if (map[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && !OBJECTS[k].can_go) {
                     skip = true;
                     break;
                 }
@@ -306,7 +306,7 @@ static void set_free_pos(char* lab, PlayerSet_t* PlayerSet)
                 bool was = false;
                 for (int m = 0; m < OBJECTS[k].count; m++) {
                     if (count_free == OBJECTS[k].pos_num_free[m]) {
-                        lab[i * BYTE_WIDTH + j] = OBJECTS[k].symbol;
+                        map[i * BYTE_WIDTH + j] = OBJECTS[k].symbol;
 
                         if (OBJECTS[k].symbol == SYM_OBJ_PLAYER) {
                             PlayerSet->px = j;
@@ -323,12 +323,12 @@ static void set_free_pos(char* lab, PlayerSet_t* PlayerSet)
     }
 }
 
-static void lab_write2file(char* lab, FILE* f) 
+static void lab_write2file(char* map, FILE* f) 
 {
     int count_free = 0;
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++)
-            if (lab[i * BYTE_WIDTH + j] == ' ') count_free++;
+            if (map[i * BYTE_WIDTH + j] == ' ') count_free++;
     }
     int number_i = rand() % count_free;
     int number_o = rand() % count_free;
@@ -338,7 +338,7 @@ static void lab_write2file(char* lab, FILE* f)
     count_free = 0;
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++)
-            fprintf(f, "%c", lab[i * BYTE_WIDTH + j]);
+            fprintf(f, "%c", map[i * BYTE_WIDTH + j]);
         fprintf(f, "\n");
     }
 }

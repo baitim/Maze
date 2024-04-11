@@ -4,11 +4,11 @@
 static void control_mouse_move  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
 static void control_follow_path (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
 static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
-static void move_on_valid (char* lab, PlayerSet_t* PlayerSet, int dx, int dy);
+static void move_on_valid (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
 
 int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, sf::Event* event)
 {
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     int dx = 0, dy = 0;
     switch (event->type) {
         case sf::Event::Closed:
@@ -65,8 +65,8 @@ int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, 
         default:
             break;
     }
-    move_on_valid(map->lab, PlayerSet, dx, dy);
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
+    move_on_valid(map->map, PlayerSet, dx, dy);
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
     return 0;
 }
 
@@ -84,7 +84,7 @@ int control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet
 static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
 {
     sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     int dx = 0, dy = 0;
     
     PlayerSet->delay_dx = (PlayerSet->delay_dx + 1) % delay_dx_max;
@@ -94,8 +94,8 @@ static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t
     dx = (mouse_pos.x > PIX_WIDTH  / 2) ? XY_dx : -XY_dx;
     dy = (mouse_pos.y > PIX_HEIGHT / 2) ? XY_dy : -XY_dy;
     
-    move_on_valid(map->lab, PlayerSet, dx, dy);
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
+    move_on_valid(map->map, PlayerSet, dx, dy);
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
 static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
@@ -103,7 +103,7 @@ static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_
     if (!map->path.path_exist && map->path.passed == map->path.count)
         return;
 
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     
     PlayerSet->delay_path = (PlayerSet->delay_path + 1) % delay_path;
 
@@ -136,7 +136,7 @@ static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_
         clean_path(&map->path);
     }
 
-    map->lab[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
+    map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
 static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
@@ -154,19 +154,19 @@ static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet
     find_shortest_path(map, PlayerSet, &mouse_pos);
 }
 
-static void move_on_valid(char* lab, PlayerSet_t* PlayerSet, int dx, int dy)
+static void move_on_valid(char* map, PlayerSet_t* PlayerSet, int dx, int dy)
 {
-    if (passable_object(lab, PlayerSet->px + dx, PlayerSet->py))
+    if (passable_object(map, PlayerSet->px + dx, PlayerSet->py))
         PlayerSet->px += dx;
 
-    if (passable_object(lab, PlayerSet->px, PlayerSet->py + dy))
+    if (passable_object(map, PlayerSet->px, PlayerSet->py + dy))
         PlayerSet->py += dy;
 }
 
-int passable_object(char* lab, int x, int y)
+int passable_object(char* map, int x, int y)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (lab[y * BYTE_WIDTH + x] == OBJECTS[i].symbol && OBJECTS[i].can_go)
+        if (map[y * BYTE_WIDTH + x] == OBJECTS[i].symbol && OBJECTS[i].can_go)
             return 1;
     }
     return 0;
