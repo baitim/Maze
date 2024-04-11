@@ -11,7 +11,7 @@ const CmdLineOption_t OPTIONS[] = {
 };
 const int COUNT_OPTIONS = sizeof(OPTIONS) / sizeof(CmdLineOption_t);
 
-ErrorCode input_cmd(int argc, const char* argv[], CmdInputData_t* cmd_data)
+ErrorCode cmd_data_init(int argc, const char* argv[], CmdInputData_t* cmd_data)
 {
     ErrorCode err = ERROR_NO;
 

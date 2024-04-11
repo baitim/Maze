@@ -103,7 +103,13 @@ static int set_shortest_path(int* distance, Map_t* map, PlayerSet_t* PlayerSet,
 
 static void dtor_queue(Queue_t* queue, Queue_t* head)
 {
-    if (!queue || queue->next == head) return;
+    if (!queue) return;
+
+    if (queue->next == head) {
+        free(queue);
+        return;
+    }
+
     dtor_queue(queue->next, head);
     free(queue);
 }

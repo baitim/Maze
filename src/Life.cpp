@@ -137,7 +137,7 @@ static void set_lighting(Map_t* map)
         if (OBJECTS[i].symbol == SYM_OBJ_LAMP)
             ind_obj_lamp = i;
 
-    memset(map->light, 20, BYTE_HEIGHT * BYTE_WIDTH);
+    memset(map->light, 25, BYTE_HEIGHT * BYTE_WIDTH);
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
             if (OBJECTS[ind_obj_lamp].symbol == map->map[i * BYTE_WIDTH + j]) {
@@ -253,7 +253,7 @@ static void count_free_pos(char* map, int* count_free, int* frees_ind)
 static void select_free_pos(char* map, char* free_pos, int count_free, int* frees_ind)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (OBJECTS[i].count == COUNT_OBJ_INF) 
+        if (OBJECTS[i].count <= 0) 
             continue;
 
         OBJECTS[i].pos_num_free = (int*) malloc((size_t)OBJECTS[i].count * sizeof(int));
@@ -309,6 +309,9 @@ static void set_free_pos(char* map, PlayerSet_t* PlayerSet)
             if (skip) continue;
 
             for (int k = 0; k < COUNT_OBJECTS; k++) {
+                if (OBJECTS[k].count <= 0) 
+                    continue;
+
                 bool was = false;
                 for (int m = 0; m < OBJECTS[k].count; m++) {
                     if (count_free == OBJECTS[k].pos_num_free[m]) {

@@ -27,7 +27,7 @@ int main(int argc, const char *argv[])
     Map_t map = {.path = {.path_target = -1}};
     PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.3f};
 
-    error = input_cmd(argc, argv, &cmd_data);
+    error = cmd_data_init(argc, argv, &cmd_data);
     if (error) return error;
 
     if (cmd_data.is_help)
@@ -54,6 +54,7 @@ error:
     err_dump(error);
 
 finally:
+    cmd_data_delete(&cmd_data);
 
     printf(print_lblue("\n# Bye!\n"));
     return 0;

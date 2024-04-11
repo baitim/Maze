@@ -22,10 +22,10 @@ typedef struct CmdLineOption_t_ {
     ErrorCode (*callback)(const char* argv[], CmdInputData_t* data);
 } CmdLineOption_t;
 
-ErrorCode input_cmd         (int argc, const char* argv[], CmdInputData_t* cmd_data);
-ErrorCode help_callback     (const char* /*argv*/[], CmdInputData_t* data);
+ErrorCode cmd_data_init     (int argc, const char* argv[], CmdInputData_t* cmd_data);
 ErrorCode cmd_data_verify   (CmdInputData_t* cmd_data);
 ErrorCode cmd_data_delete   (CmdInputData_t* cmd_data);
+ErrorCode help_callback     (const char* /*argv*/[], CmdInputData_t* data);
 ErrorCode map_txt_file_callback     (const char* argv[], CmdInputData_t* data);
 ErrorCode screenshot_file_callback  (const char* argv[], CmdInputData_t* data);
 ErrorCode font_file_callback        (const char* argv[], CmdInputData_t* data);
