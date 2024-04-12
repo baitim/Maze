@@ -79,9 +79,6 @@ void render_map(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
              .dx0 = dx0, .dy0 = dy0, .cx = cx, .cy = cy, .num_thread = num_thread,
              .thread_step = thread_step};
 
-        if (num_thread == RENDER_THREADS - 1)
-            thread_step++;
-
         pthread_create(&pool[num_thread], NULL, render_block, (void*)&block_render_info[num_thread]);
     }
 
@@ -99,15 +96,19 @@ void* render_block(void* block_render_info)
     int obj_size_y = render_data->obj_size_y;
     int dx0 = render_data->dx0;
     int dy0 = render_data->dy0;
-    int cx = render_data->cx;
-    int cy = render_data->cy;
-    bool outside_y = render_data->outside_y;
-    int num_thread = render_data->num_thread;
+    int cx  = render_data->cx;
+    int cy  = render_data->cy;
+    bool outside_y  = render_data->outside_y;
+    int num_thread  = render_data->num_thread;
     int thread_step = render_data->thread_step;
 
-    int start_iy = thread_step * obj_size_y * num_thread;
+    int start_iy = thread_step * num_thread * obj_size_y;
     int end_iy   = start_iy + thread_step * obj_size_y;
-    int chunk_y = obj_size_y;
+
+    if (num_thread == RENDER_THREADS - 1)
+        end_iy = PIX_HEIGHT;
+
+    int chunk_y  = obj_size_y;
     for (int iy = start_iy; iy < end_iy; iy += obj_size_y) {
         if (iy + obj_size_y >= PIX_HEIGHT)
             chunk_y = PIX_HEIGHT - iy;

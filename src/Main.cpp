@@ -37,7 +37,7 @@ int main(int argc, const char *argv[])
     if (error) return error;
 
     objects_get();
-
+    
     map_create(&map, &PlayerSet, cmd_data.map_txt_file);
 
     error = window_prepare(&window, &texture, &sprite, &pixels, &font, cmd_data.font_file,
