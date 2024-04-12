@@ -7,18 +7,18 @@
 #include "ProcessCmd.h"
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                         int pos, int step_x, int step_y, int chunk_x, int chunk_y);
+                         int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
 static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int step_x, int step_y, int chunk_x, int chunk_y);
+                       int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
 static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                              int step_x, int step_y, int chunk_x, int chunk_y);
+                              int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
-static void paint_obj_chunk(sf::Uint8* pixels, int ix, int iy, int step_x, int step_y,
-                            int chunk_x, int chunk_y, int obj_ind, int (*skip)(unsigned char*));
+static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+                        int chunk_x, int chunk_y, int obj_ind);
 
-static int  obj_skip_white(unsigned char* color);
+static int get_obj_index (int obj_sym);
 
 void print_help()
 {
@@ -45,17 +45,20 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 {
     int cx = PlayerSet->px;
     int cy = PlayerSet->py;
-    int step_x = (int) (PlayerSet->scale * wscale_render * wbyte2pix);
-    int step_y = (int) (PlayerSet->scale * hscale_render * hbyte2pix);
-    int dy0 = PIX_HEIGHT / 2 - (PIX_HEIGHT / 2 / step_y) * step_y;
-    int dx0 = PIX_WIDTH  / 2 - (PIX_WIDTH  / 2 / step_x) * step_x;
+    int obj_size_x = (int) (PlayerSet->scale * wscale_render * wbyte2pix);
+    int obj_size_y = (int) (PlayerSet->scale * hscale_render * hbyte2pix);
+    int dy0 = PIX_HEIGHT / 2 - (PIX_HEIGHT / 2 / obj_size_y) * obj_size_y;
+    int dx0 = PIX_WIDTH  / 2 - (PIX_WIDTH  / 2 / obj_size_x) * obj_size_x;
+
+    int step_x = obj_size_x;
+    int step_y = obj_size_y;
 
     int chunk_y = step_y;
     for (int iy = 0; iy < PIX_HEIGHT; iy += step_y) {
         if (iy + step_y >= PIX_HEIGHT) 
             chunk_y = PIX_HEIGHT - iy;
         
-        int dy = (dy0 + iy - PIX_HEIGHT / 2) / step_y;
+        int dy = (dy0 + iy - PIX_HEIGHT / 2) / obj_size_y;
         int iN = cy + dy;
         bool outside_y = false;
         if (iN != MIN(BYTE_HEIGHT - 1, MAX(0, iN)))
@@ -66,58 +69,60 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
             if (ix + step_x >= PIX_WIDTH) 
                 chunk_x = PIX_WIDTH - ix;
 
-            int dx = (dx0 + ix - PIX_WIDTH / 2) / step_x;
+            int dx = (dx0 + ix - PIX_WIDTH / 2) / obj_size_x;
             int iM = cx + dx;
             bool outside_x = false;
             if (iM != MIN(BYTE_WIDTH - 1, MAX(0, iM)))
                 outside_x = true;
 
             int pos = iN * BYTE_WIDTH + iM;
-
             bool outside = outside_x || outside_y;
-            paint_object(outside, pixels, map, ix, iy, pos, step_x, step_y, chunk_x, chunk_y);
+
+            paint_object(outside, pixels, map, ix, iy, pos, obj_size_x, obj_size_y, chunk_x, chunk_y);
 
             if (!outside && map->path.path[pos] > 0 && map->path.path_target != pos &&
                 map->path.passed < map->path.path[pos])
-                paint_path(pixels, map, ix, iy, step_x, step_y, chunk_x, chunk_y);
+                paint_path(pixels, map, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
 
             if (!outside && map->path.path_target == pos &&
                 ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist))
-                paint_path_target(map->path.path_exist, pixels, map, ix, iy, step_x, step_y, chunk_x, chunk_y);
+                paint_path_target(map->path.path_exist, pixels, map, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
         }
     }
 }
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                         int pos, int step_x, int step_y, int chunk_x, int chunk_y)
+                         int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
-    int obj_ind = SYM_OBJ_ERR;
-    for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (map->map[pos] == OBJECTS[i].symbol) {
-            obj_ind = i;
-            break;
-        }
-    }
+    int obj_ind = get_obj_index(map->map[pos]);
 
     if (outside || obj_ind == SYM_OBJ_ERR) {
-        for (int y = 0; y < step_y; y++) {
+        for (int y = 0; y < obj_size_y; y++) {
             sf::Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
-            memset(pixel, 0, 4 * sizeof(sf::Uint8) * step_x);
+            memset(pixel, 0, 4 * sizeof(sf::Uint8) * obj_size_x);
         }
         return;
     }
-            
+
+    int pos_col = pos * 3;
+    float x_coef = (float)wbyte2pix / (float)obj_size_x;
+    float y_coef = (float)hbyte2pix / (float)obj_size_y;
     for (int y = 0; y < chunk_y; y++) {
-        int y_col = y * hbyte2pix / step_y;
+
+        int y_col = (int)((float)y * y_coef) * wbyte2pix * 4;
+        int y_pix_window = (iy + y) * PIX_WIDTH * 4;
+
         for (int x = 0; x < chunk_x; x++) {
-            int x_col = x * wbyte2pix / step_x;
 
-            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
-            unsigned char* color = &OBJECTS[obj_ind].bytes_color[(y_col * wbyte2pix + x_col) * 4];
+            int x_col = (int)((float)x * x_coef) * 4;
+            int x_pix_window = (ix + x) * 4;
 
-            pixel[0] = MIN(255, color[0] + map->col[pos * 3 + 0]);
-            pixel[1] = MIN(255, color[1] + map->col[pos * 3 + 1]);
-            pixel[2] = MIN(255, color[2] + map->col[pos * 3 + 2]);
+            sf::Uint8* pixel = &pixels[y_pix_window + x_pix_window];
+            unsigned char* color = &OBJECTS[obj_ind].bytes_color[y_col + x_col];
+
+            pixel[0] = MIN(255, color[0] + map->col[pos_col + 0]);
+            pixel[1] = MIN(255, color[1] + map->col[pos_col + 1]);
+            pixel[2] = MIN(255, color[2] + map->col[pos_col + 2]);
 
             pixel[3] = map->light[pos];
         }
@@ -125,21 +130,15 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
 }
 
 static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int step_x, int step_y, int chunk_x, int chunk_y)
+                       int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
-    int ind_obj_path = -1;
-    for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (OBJECTS[i].symbol == SYM_OBJ_PATH) {
-            ind_obj_path = i;
-            break;
-        }
-    }
+    int ind_obj_path = get_obj_index(SYM_OBJ_PATH);
 
-    paint_obj_chunk(pixels, ix, iy, step_x, step_y, chunk_x, chunk_y, ind_obj_path, obj_skip_white);
+    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path);
 }
 
 static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                              int step_x, int step_y, int chunk_x, int chunk_y)
+                              int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path_target = -1;
     for (int i = 0; i < COUNT_OBJECTS; i++) {
@@ -150,21 +149,28 @@ static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int i
         }
     }
 
-    paint_obj_chunk(pixels, ix, iy, step_x, step_y, chunk_x, chunk_y, ind_obj_path_target, obj_skip_white);
+    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path_target);
 }
 
-static void paint_obj_chunk(sf::Uint8* pixels, int ix, int iy, int step_x, int step_y,
-                            int chunk_x, int chunk_y, int obj_ind, int (*skip)(unsigned char*))
+static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+                            int chunk_x, int chunk_y, int obj_ind)
 {
+    float x_coef = (float)wbyte2pix / (float)obj_size_x;
+    float y_coef = (float)hbyte2pix / (float)obj_size_y;
     for (int y = 0; y < chunk_y; y++) {
-        int y_col = y * hbyte2pix / step_y;
+
+        int y_col = (int)((float)y * y_coef) * wbyte2pix * 4;
+        int y_pix_window = (iy + y) * PIX_WIDTH * 4;
+
         for (int x = 0; x < chunk_x; x++) {
-            int x_col = x * wbyte2pix / step_x;
-            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix + x, iy + y)];
 
-            unsigned char* color = &OBJECTS[obj_ind].bytes_color[(y_col * wbyte2pix + x_col) * 4];
+            int x_col = (int)((float)x * x_coef) * 4;
+            int x_pix_window = (ix + x) * 4;
 
-            if (skip(color))
+            sf::Uint8* pixel = &pixels[y_pix_window + x_pix_window];
+            unsigned char* color = &OBJECTS[obj_ind].bytes_color[y_col + x_col];
+
+            if (color[0] == 255 && color[1] == 255 && color[2] == 255)
                 continue;
     
             pixel[0] = MIN(255, color[0] + pixel[0]);
@@ -174,9 +180,12 @@ static void paint_obj_chunk(sf::Uint8* pixels, int ix, int iy, int step_x, int s
     }
 }
 
-static int obj_skip_white(unsigned char* color)
+static int get_obj_index(int obj_sym)
 {
-    return (color[0] == 255 && color[1] == 255 && color[2] == 255);
+    for (int i = 0; i < COUNT_OBJECTS; i++)
+        if (OBJECTS[i].symbol == obj_sym)
+            return i;
+    return -1;
 }
 
 void make_screenshot(sf::RenderWindow* window, const char* output_file)
