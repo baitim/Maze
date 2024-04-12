@@ -13,6 +13,7 @@ struct PlayerSet_t {
     int dx, dy;
     int delay_dx, delay_dy;
     int delay_path;
+    int delay_info;
     float scale, Kscale;
 };
 

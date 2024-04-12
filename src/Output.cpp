@@ -1,10 +1,27 @@
 #include <string.h>
+#include <pthread.h>
 
 #include "ANSI_colors.h"
 #include "Output.h"
 #include "Math.h"
 #include "Life.h"
 #include "ProcessCmd.h"
+
+typedef struct BlockRenderInfo_t_ {
+    sf::Uint8* pixels;
+    Map_t* map;
+    int obj_size_x;
+    int obj_size_y;
+    int dx0;
+    int dy0;
+    int cx;
+    int cy;
+    bool outside_y;
+    int num_thread;
+    int thread_step;
+} BlockRenderInfo_t;
+
+void* render_block(void* line_render_info);
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
                          int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
@@ -41,39 +58,76 @@ void set_text(sf::Font* font, sf::Text* text, float x, float y)
     text->setOutlineColor(sf::Color(252, 0, 17));
 }
 
-void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
+void render_map(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 {
+    pthread_t pool[RENDER_THREADS];
+
     int cx = PlayerSet->px;
     int cy = PlayerSet->py;
     int obj_size_x = (int) (PlayerSet->scale * wscale_render * wbyte2pix);
     int obj_size_y = (int) (PlayerSet->scale * hscale_render * hbyte2pix);
-    int dy0 = PIX_HEIGHT / 2 - (PIX_HEIGHT / 2 / obj_size_y) * obj_size_y;
     int dx0 = PIX_WIDTH  / 2 - (PIX_WIDTH  / 2 / obj_size_x) * obj_size_x;
+    int dy0 = PIX_HEIGHT / 2 - (PIX_HEIGHT / 2 / obj_size_y) * obj_size_y;
 
-    int step_x = obj_size_x;
-    int step_y = obj_size_y;
+    int thread_step = PIX_HEIGHT / RENDER_THREADS / obj_size_y;
 
-    int chunk_y = step_y;
-    for (int iy = 0; iy < PIX_HEIGHT; iy += step_y) {
-        if (iy + step_y >= PIX_HEIGHT) 
+    BlockRenderInfo_t block_render_info[RENDER_THREADS];
+
+    for (int num_thread = 0; num_thread < RENDER_THREADS; num_thread++) {
+        block_render_info[num_thread] = 
+            {.pixels = pixels, .map = map, .obj_size_x = obj_size_x, .obj_size_y = obj_size_y,
+             .dx0 = dx0, .dy0 = dy0, .cx = cx, .cy = cy, .num_thread = num_thread,
+             .thread_step = thread_step};
+
+        if (num_thread == RENDER_THREADS - 1)
+            thread_step++;
+
+        pthread_create(&pool[num_thread], NULL, render_block, (void*)&block_render_info[num_thread]);
+    }
+
+    for (int num_thread = 0; num_thread < RENDER_THREADS; num_thread++)
+        pthread_join(pool[num_thread], NULL);
+}
+
+void* render_block(void* block_render_info)
+{
+    BlockRenderInfo_t* render_data = (BlockRenderInfo_t*) block_render_info;
+
+    sf::Uint8* pixels = render_data->pixels;
+    Map_t* map = render_data->map;
+    int obj_size_x = render_data->obj_size_x;
+    int obj_size_y = render_data->obj_size_y;
+    int dx0 = render_data->dx0;
+    int dy0 = render_data->dy0;
+    int cx = render_data->cx;
+    int cy = render_data->cy;
+    bool outside_y = render_data->outside_y;
+    int num_thread = render_data->num_thread;
+    int thread_step = render_data->thread_step;
+
+    int start_iy = thread_step * obj_size_y * num_thread;
+    int end_iy   = start_iy + thread_step * obj_size_y;
+    int chunk_y = obj_size_y;
+    for (int iy = start_iy; iy < end_iy; iy += obj_size_y) {
+        if (iy + obj_size_y >= PIX_HEIGHT)
             chunk_y = PIX_HEIGHT - iy;
-        
+
         int dy = (dy0 + iy - PIX_HEIGHT / 2) / obj_size_y;
         int iN = cy + dy;
         bool outside_y = false;
         if (iN != MIN(BYTE_HEIGHT - 1, MAX(0, iN)))
             outside_y = true;
 
-        int chunk_x = step_x;
-        for (int ix = 0; ix < PIX_WIDTH; ix += step_x) {
-            if (ix + step_x >= PIX_WIDTH) 
+        int chunk_x = obj_size_x;
+        for (int ix = 0; ix < PIX_WIDTH; ix += obj_size_x) {
+            if (ix + obj_size_x >= PIX_WIDTH) 
                 chunk_x = PIX_WIDTH - ix;
 
             int dx = (dx0 + ix - PIX_WIDTH / 2) / obj_size_x;
             int iM = cx + dx;
             bool outside_x = false;
             if (iM != MIN(BYTE_WIDTH - 1, MAX(0, iM)))
-                outside_x = true;
+                    outside_x = true;
 
             int pos = iN * BYTE_WIDTH + iM;
             bool outside = outside_x || outside_y;
@@ -89,6 +143,7 @@ void render_lab(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
                 paint_path_target(map->path.path_exist, pixels, map, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
         }
     }
+    pthread_exit(0);
 }
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
@@ -202,15 +257,22 @@ void print_state_info(sf::RenderWindow* window, sf::Text* POS_Text, sf::Text* FP
                       char* pos_string, int len_pos_string, char* fps_string, int len_fps_string,
                       std::chrono::_V2::steady_clock::time_point clock_begin,
                       std::chrono::_V2::steady_clock::time_point clock_end,
-                      PlayerSet_t* PlayerSet)
+                      PlayerSet_t* PlayerSet, double* old_fps)
 {
+    PlayerSet->delay_info = (PlayerSet->delay_info + 1) % delay_info;
+
     snprintf(pos_string, len_pos_string, "pos: %d  %d", PlayerSet->px, PlayerSet->py);
     POS_Text->setString(pos_string);
     window->draw(*POS_Text);
 
-    auto elapsed_ms = std::chrono::duration<double,std::milli>(clock_end - clock_begin).count();
-    double fps = 100.f / elapsed_ms;
-    snprintf(fps_string, len_fps_string, "fps: %.f", fps);
+    if (PlayerSet->delay_info == 1) {
+        auto elapsed_ms = std::chrono::duration<double,std::milli>(clock_end - clock_begin).count();
+        double fps = 100.f / elapsed_ms;
+        snprintf(fps_string, len_fps_string, "fps: %.f", fps);
+        *old_fps = fps;
+    } else {
+        snprintf(fps_string, len_fps_string, "fps: %.f", *old_fps);
+    }
     FPS_Text->setString(fps_string);
     window->draw(*FPS_Text);
 }

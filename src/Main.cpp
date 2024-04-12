@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
 
     objects_get();
 
-    lab_create(&map, &PlayerSet, cmd_data.map_txt_file);
+    map_create(&map, &PlayerSet, cmd_data.map_txt_file);
 
     error = window_prepare(&window, &texture, &sprite, &pixels, &font, cmd_data.font_file,
                            &POS_Text, &FPS_Text);

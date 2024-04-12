@@ -37,6 +37,7 @@ ErrorCode window_default_loop(sf::RenderWindow* window, sf::Texture* texture, sf
     int len_fps_string = MAX_SIZE_INFO_STR;
     char* fps_string = (char*) calloc(len_fps_string, sizeof(char));
     if (!fps_string) return ERROR_ALLOC_FAIL;
+    double old_fps = 0;
     
     while (window->isOpen()) {
         auto clock_begin = std::chrono::steady_clock::now();
@@ -53,14 +54,14 @@ ErrorCode window_default_loop(sf::RenderWindow* window, sf::Texture* texture, sf
         control_noevent(window, map, PlayerSet);
 
         window->clear();
-        render_lab(pixels, map, PlayerSet);
+        render_map(pixels, map, PlayerSet);
         texture->update(pixels);
         window->draw(*sprite);
 
         auto clock_end = std::chrono::steady_clock::now();
         if (PlayerSet->is_info) 
             print_state_info(window, POS_Text, FPS_Text, pos_string, len_pos_string,
-                             fps_string, len_fps_string, clock_begin, clock_end, PlayerSet);
+                             fps_string, len_fps_string, clock_begin, clock_end, PlayerSet, &old_fps);
 
         window->display();
     }

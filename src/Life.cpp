@@ -20,15 +20,15 @@ Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     true,   "images/Texture/TextureImDest.png", 0,   0, {}}
 };
 
-static void lab_gen    (char* map);
-static void lab_step   (char* map);
-static void lab_fill_empty  (char* map, PlayerSet_t* PlayerSet);
+static void map_gen    (char* map);
+static void map_step   (char* map);
+static void map_fill_empty  (char* map, PlayerSet_t* PlayerSet);
 static void set_lighting    (Map_t* map);
 static void set_light_lamp  (Map_t* map, int x, int y);
 static void set_hills       (Map_t* map);
 static void paint_subgraph  (int v, int color, int* colors, char* map);
 static int  get_center_graph(int v, int color, int* colors, char* map);
-static void lab_write2file  (char* map, FILE* f);
+static void map_write2file  (char* map, FILE* f);
 static void count_free_pos  (char* map, int* count_free, int* frees_ind);
 static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind);
 static bool check_neighbors (Object* src_obj, char* map, int pos);
@@ -40,26 +40,26 @@ int pos_in_pix_window(int x, int y)
     return (y * PIX_WIDTH + x) * 4;
 }
 
-void lab_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
+void map_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
 {
     memset(map->map,   0, sizeof(char) * BYTE_HEIGHT * BYTE_WIDTH);
     memset(map->light, 0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH);
     memset(map->col,   0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH * 3);
     
-    lab_gen(map->map);
+    map_gen(map->map);
 
     int x = 0;
     while (x++ < STEPS_GEN)
-        lab_step(map->map);
+        map_step(map->map);
 
-    lab_fill_empty(map->map, PlayerSet);
+    map_fill_empty(map->map, PlayerSet);
 
     set_lighting(map);
 
     // set_hills(map);
 
     FILE *f = fopen(output_file, "w");
-    lab_write2file(map->map, f);
+    map_write2file(map->map, f);
 }
 
 static void set_hills(Map_t* map)
@@ -173,7 +173,7 @@ static void set_light_lamp(Map_t* map, int x, int y)
     }
 }
 
-static void lab_gen(char* map)
+static void map_gen(char* map)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
@@ -189,7 +189,7 @@ static void lab_gen(char* map)
     }
 }
 
-static void lab_step(char* map)
+static void map_step(char* map)
 {
     char new_m[BYTE_HEIGHT * BYTE_WIDTH];
     for (int i = 0; i < BYTE_HEIGHT; i++) {
@@ -222,7 +222,7 @@ static void lab_step(char* map)
     }
 }
 
-static void lab_fill_empty(char* map, PlayerSet_t* PlayerSet)
+static void map_fill_empty(char* map, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
     int* frees_ind = (int*) calloc(BYTE_HEIGHT * BYTE_WIDTH,  sizeof(int));
@@ -332,7 +332,7 @@ static void set_free_pos(char* map, PlayerSet_t* PlayerSet)
     }
 }
 
-static void lab_write2file(char* map, FILE* f) 
+static void map_write2file(char* map, FILE* f) 
 {
     int count_free = 0;
     for (int i = 0; i < BYTE_HEIGHT; i++) {
