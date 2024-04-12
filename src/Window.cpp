@@ -1,5 +1,5 @@
-#include <string.h>
 #include <chrono>
+#include <string.h>
 
 #include "Output.h"
 #include "Window.h"
@@ -58,17 +58,9 @@ ErrorCode window_default_loop(sf::RenderWindow* window, sf::Texture* texture, sf
         window->draw(*sprite);
 
         auto clock_end = std::chrono::steady_clock::now();
-        if (PlayerSet->is_info) {
-            snprintf(pos_string, len_pos_string, "pos: %d  %d", PlayerSet->px, PlayerSet->py);
-            POS_Text->setString(pos_string);
-            window->draw(*POS_Text);
-
-            auto elapsed_ms = std::chrono::duration<double,std::milli>(clock_end - clock_begin).count();
-            double fps = 100.f / elapsed_ms;
-            snprintf(fps_string, len_fps_string, "fps: %.f", fps);
-            FPS_Text->setString(fps_string);
-            window->draw(*FPS_Text);
-        }
+        if (PlayerSet->is_info) 
+            print_state_info(window, POS_Text, FPS_Text, pos_string, len_pos_string,
+                             fps_string, len_fps_string, clock_begin, clock_end, PlayerSet);
 
         window->display();
     }
