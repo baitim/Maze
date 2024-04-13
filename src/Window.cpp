@@ -76,7 +76,6 @@ static void free_window_stuff(sf::Uint8* pixels, char* pos_string, char* fps_str
     free(pos_string);
     free(fps_string);
 
-    for (int i = 0; i < COUNT_OBJECTS; i++) {
+    for (int i = 0; i < COUNT_OBJECTS; i++)
         free(OBJECTS[i].pos_num_free);
-    }
 }

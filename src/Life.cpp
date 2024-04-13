@@ -7,19 +7,24 @@
 #include "Life.h"
 #include "Math.h"
 
-typedef struct MapRoom_t_ {
-    int count_rooms;
-    int* obj_count;
-    int** obj_ind;
-} MapRoom_t;
-
 typedef struct Tunnel_t_ {
     int point_start;
     int point_finish;
 } Tunnel_t;
 
+typedef struct Point_t_ {
+    int x;
+    int y;
+    int ind;
+} Point_t;
+
+typedef struct MapRoom_t_ {
+    int count_rooms;
+    int* obj_count;
+    Point_t** obj_ind;
+} MapRoom_t;
+
 Object OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      false,  "images/Texture/TextureError.png",  0,   0, {}},
     {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png",   20,  0, {}},
     {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   5,   0, {}},
     {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", 100, 0, {}},
@@ -29,7 +34,8 @@ Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     true,   "images/Texture/TexturePath.png",   0,   0, {}},
     {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     true,   "images/Texture/TextureDest.png",   0,   0, {}},
     {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     true,   "images/Texture/TextureImDest.png", 0,   0, {}},
-    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   5,   0, {}}
+    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   5,   0, {}},
+    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      false,  "images/Texture/TextureError.png",  0,   0, {}}
 };
 
 static void map_create_connectivity(char* map);
@@ -175,9 +181,11 @@ void get_graph_mst(int* graph, int count, int* mst)
         visited[u] = 1;
 
         for (int v = 0; v < count; v++) {
-            if (graph[u * count + v] != -1 && visited[v] == 0 && graph[u * count + v] < weight[v]) {
+            int ind = u * count + v;
+
+            if (graph[ind] != -1 && visited[v] == 0 && graph[ind] < weight[v]) {
                 mst[v] = u;
-                weight[v] = graph[u * count + v];
+                weight[v] = graph[ind];
             }
         }
     }
@@ -190,21 +198,20 @@ static void make_graph(MapRoom_t* map_room, int* graph, Tunnel_t* tunnels)
 {
     for (int i = 0; i < map_room->count_rooms; i++) {
         for (int j = i + 1; j < map_room->count_rooms; j++) {
-
             int min_dist = BYTE_HEIGHT * BYTE_WIDTH;
             int start_min, finish_min;
             for (int a = 0; a < map_room->obj_count[i]; a++) {
-                int x1 = map_room->obj_ind[i][a] % BYTE_WIDTH;
-                int y1 = map_room->obj_ind[i][a] / BYTE_WIDTH;
+                int x1 = map_room->obj_ind[i][a].x;
+                int y1 = map_room->obj_ind[i][a].y;
                 for (int b = 0; b < map_room->obj_count[j]; b++) {
-                    int x2 = map_room->obj_ind[j][b] % BYTE_WIDTH;
-                    int y2 = map_room->obj_ind[j][b] / BYTE_WIDTH;
+                    int x2 = map_room->obj_ind[j][b].x;
+                    int y2 = map_room->obj_ind[j][b].y;
                     int dist = abs(y2 - y1) + abs(x2 - x1);
 
                     if (min_dist > dist) {
                         min_dist = dist;
-                        start_min  = map_room->obj_ind[i][a];
-                        finish_min = map_room->obj_ind[j][b];
+                        start_min  = map_room->obj_ind[i][a].ind;
+                        finish_min = map_room->obj_ind[j][b].ind;
                     }
                 }
             }
@@ -235,15 +242,19 @@ static void paint_graph(MapRoom_t* map_room, char* map)
 
     map_room->count_rooms = count_rooms;
     map_room->obj_count = (int*)  calloc(sizeof(int),  (size_t)(count_rooms));
-    map_room->obj_ind   = (int**) calloc(sizeof(int*), (size_t)(count_rooms));
+    map_room->obj_ind   = (Point_t**) calloc(sizeof(Point_t*), (size_t)(count_rooms));
 
     for (int i = 0; i < count_rooms; i++) 
-        map_room->obj_ind[i] = (int*) calloc(sizeof(int), (size_t)(childs[i]));
+        map_room->obj_ind[i] = (Point_t*) calloc(sizeof(Point_t), (size_t)(childs[i]));
 
     for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++) {
         if (colors[i] > 0) {
             int ind = map_room->obj_count[colors[i] - 1];
-            map_room->obj_ind[colors[i] - 1][ind] = i;
+
+            map_room->obj_ind[colors[i] - 1][ind].x = i % BYTE_WIDTH;
+            map_room->obj_ind[colors[i] - 1][ind].y = i / BYTE_WIDTH;
+            map_room->obj_ind[colors[i] - 1][ind].ind = i;
+
             map_room->obj_count[colors[i] - 1]++;
         }
     }
@@ -276,7 +287,7 @@ static void map_room_delete(MapRoom_t* map_room)
 {
     for (int i = 0; i < map_room->count_rooms; i++)
         free(map_room->obj_ind[i]);
-    //free(map_room->obj_ind);
+    free(map_room->obj_ind);
     free(map_room->obj_count);
 }
 
@@ -302,7 +313,9 @@ static void set_light_lamp(Map_t* map, int x, int y)
     int pos = y * BYTE_WIDTH + x;
     for (int dy = -light_dist; dy <= light_dist; dy++) {
         for (int dx = -light_dist; dx <= light_dist; dx++) {
-            if (((pos + dy * BYTE_WIDTH + dx) < 0) || ((pos + dy * BYTE_WIDTH + dx) > BYTE_HEIGHT * BYTE_WIDTH -1))
+            int dpos = pos + dy * BYTE_WIDTH + dx;
+
+            if ((dpos < 0) || (dpos > BYTE_HEIGHT * BYTE_WIDTH -1))
                 continue;
 
             if (dx + x >= BYTE_WIDTH || dx + x < 0)
@@ -315,10 +328,10 @@ static void set_light_lamp(Map_t* map, int x, int y)
             unsigned char was_light = map->light[pos + dy * BYTE_WIDTH + dx];
             map->light[pos + dy * BYTE_WIDTH + dx] = (unsigned char) MIN(255, was_light + ratio_norm);
 
-            unsigned char was_red   = map->col[(pos + dy * BYTE_WIDTH + dx) * 3 + 0];
-            unsigned char was_green = map->col[(pos + dy * BYTE_WIDTH + dx) * 3 + 1];
-            map->col[(pos + dy * BYTE_WIDTH + dx) * 3 + 0] = MIN(255, was_red   + ratio_norm / 7);
-            map->col[(pos + dy * BYTE_WIDTH + dx) * 3 + 1] = MIN(255, was_green + ratio_norm / 7);
+            unsigned char was_red   = map->col[dpos * 3 + 0];
+            unsigned char was_green = map->col[dpos * 3 + 1];
+            map->col[dpos * 3 + 0] = MIN(255, was_red   + ratio_norm / 7);
+            map->col[dpos * 3 + 1] = MIN(255, was_green + ratio_norm / 7);
         }
     }
 }
@@ -327,14 +340,15 @@ static void map_gen(char* map)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
+            int pos = i * BYTE_WIDTH + j;
             if (is_obj_on_border(i, j))
-                map[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
+                map[pos] = SYM_OBJ_BORDER;
 
             int x = (rand() % 100 + 1);
             if (x >= CHANCE_LIFE)
-                map[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
+                map[pos] = SYM_OBJ_WALL;
             else
-                map[i * BYTE_WIDTH + j] = SYM_OBJ_ROAD;
+                map[pos] = SYM_OBJ_ROAD;
         }
     }
 }
@@ -344,8 +358,9 @@ static void map_step(char* map)
     char new_m[BYTE_HEIGHT * BYTE_WIDTH];
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
+            int pos = i * BYTE_WIDTH + j;
             if (is_obj_on_border(i, j)) {
-                new_m[i * BYTE_WIDTH + j] = SYM_OBJ_BORDER;
+                new_m[pos] = SYM_OBJ_BORDER;
                 continue;
             }
             int byte_val_neighbours = 0;
@@ -358,16 +373,17 @@ static void map_step(char* map)
                 }
             }
             if (byte_val_neighbours >= NEW_LIFE)
-                new_m[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
-            else if (map[i * BYTE_WIDTH + j] == SYM_OBJ_WALL && byte_val_neighbours >= STAY_IN_LIFE)
-                new_m[i * BYTE_WIDTH + j] = SYM_OBJ_WALL;
+                new_m[pos] = SYM_OBJ_WALL;
+            else if (map[pos] == SYM_OBJ_WALL && byte_val_neighbours >= STAY_IN_LIFE)
+                new_m[pos] = SYM_OBJ_WALL;
             else 
-                new_m[i * BYTE_WIDTH + j] = SYM_OBJ_ROAD;
+                new_m[pos] = SYM_OBJ_ROAD;
         }
     }
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            map[i * BYTE_WIDTH + j] = new_m[i * BYTE_WIDTH + j];
+            int pos = i * BYTE_WIDTH + j;
+            map[pos] = new_m[pos];
         }
     }
 }
@@ -390,9 +406,10 @@ static void count_free_pos(char* map, int* count_free, int* frees_ind)
 {
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
+            int pos = i * BYTE_WIDTH + j;
             for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (map[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
-                    frees_ind[*count_free] = i * BYTE_WIDTH + j;
+                if (map[pos] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
+                    frees_ind[*count_free] = pos;
                     (*count_free)++;
                 }
             }
@@ -513,15 +530,15 @@ static int obj_can_set(char* map, int map_ind)
         if (map[map_ind] == OBJECTS[k].symbol && !OBJECTS[k].can_go)
             return 0;
 
-    int ind_obj_tunnel = get_obj_index(SYM_OBJ_PATH);
-
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            
             int pos = map_ind + dy * BYTE_WIDTH + dx;
             if (pos < 0 || pos >= BYTE_HEIGHT * BYTE_WIDTH)
                 continue;
 
-            if (OBJECTS[ind_obj_tunnel].symbol == map[pos])
+            if (map[pos] == SYM_OBJ_TUNNEL)
                 return 0;
         }
     }

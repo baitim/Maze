@@ -38,7 +38,6 @@ typedef struct Map_t_ {
 } Map_t;
 
 typedef enum ObjectsSymbols_ {
-    SYM_OBJ_ERR     = '!',
     SYM_OBJ_WALL    = '#',
     SYM_OBJ_ROAD    = ' ',
     SYM_OBJ_BORDER  = '*',
@@ -48,7 +47,8 @@ typedef enum ObjectsSymbols_ {
     SYM_OBJ_PATH    = '`',
     SYM_OBJ_DEST    = 'V',
     SYM_OBJ_IMDEST  = 'X',
-    SYM_OBJ_TUNNEL  = 'T'
+    SYM_OBJ_TUNNEL  = 'T',
+    SYM_OBJ_ERR     = '!'
 } ObjectsSymbols;
 
 typedef enum CountObject2Render_ {
