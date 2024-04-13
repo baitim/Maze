@@ -18,7 +18,7 @@ const int delay_dy_max = 15;
 const int delay_path = 12;
 const int delay_info = 50;
 const int light_dist = 20;
-const int light_force = 1.2;
+const double light_force = 1.f;
 const int MAX_SIZE_INFO_STR = 100;
 const int RENDER_THREADS = 3;
 

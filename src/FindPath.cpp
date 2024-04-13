@@ -13,8 +13,8 @@ typedef struct Queue_t_ {
 
 static int  enqueue     (Queue_t** queue, int x, int y);
 static int  dequeue     (Queue_t** queue, int* x, int* y);
-static int  step        (int* distance, int x, int y, Queue_t** queue);
-static void is_step_par (int* distance, int* x, int* y);
+static int  step        (int* distance, char* map, int x, int y, Queue_t** queue);
+static void is_step_par (int* distance, char* map, int* x, int* y);
 static void dtor_queue  (Queue_t* queue, Queue_t* head);
 static int set_shortest_path (int* distance, Map_t* map, PlayerSet_t* PlayerSet,
                               sf::Vector2i* mouse_pos, Path_t* path);
@@ -59,7 +59,7 @@ static int step(int* distance, char* map, int x, int y, Queue_t** queue)
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
             if ((abs(dx) + abs(dy) == 1) && passable_object(map, x + dx, y + dy)) {
-                new_queue = (int*)&distance[BYTE_WIDTH * (y + dy) + x + dx];
+                new_queue = &distance[BYTE_WIDTH * (y + dy) + x + dx];
 
                 if (*new_queue == 0 || *new_queue > len + 1) {
                     *new_queue = len + 1;

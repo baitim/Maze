@@ -10,9 +10,8 @@ CFLAGS   = -O3 # -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++\
 -Wvariadic-macros -Wno-literal-suffix -Wno-missing-field-initializers -Wno-narrowing\
 -Wno-old-style-cast -Wno-varargs -Wstack-protector -fcheck-new -fsized-deallocation\
 -fstack-protector -fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer\
--Wlarger-than=500000 -Wstack-usage=500000 -pie -fPIE -Werror=vla\
+-Wlarger-than=1310720 -Wstack-usage=1310720 -pie -fPIE -Werror=vla\
 -Itests -Isrc\
--fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 
 LFLAGS   = -lpthread -lsfml-graphics -lsfml-window -lsfml-system
 

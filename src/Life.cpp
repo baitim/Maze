@@ -45,8 +45,6 @@ static void map_step        (char* map);
 static void map_fill_empty  (char* map, PlayerSet_t* PlayerSet);
 static void set_lighting    (Map_t* map);
 static void set_light_lamp  (Map_t* map, int x, int y);
-static void set_hills       (Map_t* map);
-static int  get_center_graph(int v, int color, int* colors, char* map);
 static void map_write2file  (char* map, FILE* f);
 static void count_free_pos  (char* map, int* count_free, int* frees_ind);
 static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind);

@@ -30,11 +30,11 @@ ErrorCode window_default_loop(sf::RenderWindow* window, sf::Texture* texture, sf
                               sf::Uint8* pixels, sf::Text* POS_Text, sf::Text* FPS_Text,
                               Map_t* map, PlayerSet_t* PlayerSet, char* screenshot_file)
 {
-    int len_pos_string = MAX_SIZE_INFO_STR;
+    size_t len_pos_string = MAX_SIZE_INFO_STR;
     char* pos_string = (char*) calloc(len_pos_string, sizeof(char));
     if (!pos_string) return ERROR_ALLOC_FAIL;
 
-    int len_fps_string = MAX_SIZE_INFO_STR;
+    size_t len_fps_string = MAX_SIZE_INFO_STR;
     char* fps_string = (char*) calloc(len_fps_string, sizeof(char));
     if (!fps_string) return ERROR_ALLOC_FAIL;
     double old_fps = 0;

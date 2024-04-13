@@ -16,7 +16,6 @@ typedef struct BlockRenderInfo_t_ {
     int dy0;
     int cx;
     int cy;
-    bool outside_y;
     int num_thread;
     int thread_step;
 } BlockRenderInfo_t;
@@ -26,10 +25,10 @@ void* render_block(void* line_render_info);
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
                          int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
-static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
+static void paint_path(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+                       int chunk_x, int chunk_y);
 
-static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
+static void paint_path_target(int is_exist, sf::Uint8* pixels, int ix, int iy,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
 static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
@@ -98,7 +97,6 @@ void* render_block(void* block_render_info)
     int dy0 = render_data->dy0;
     int cx  = render_data->cx;
     int cy  = render_data->cy;
-    bool outside_y  = render_data->outside_y;
     int num_thread  = render_data->num_thread;
     int thread_step = render_data->thread_step;
 
@@ -137,14 +135,14 @@ void* render_block(void* block_render_info)
 
             if (!outside && map->path.path[pos] > 0 && map->path.path_target != pos &&
                 map->path.passed < map->path.path[pos])
-                paint_path(pixels, map, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
+                paint_path(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
 
             if (!outside && map->path.path_target == pos &&
                 ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist))
-                paint_path_target(map->path.path_exist, pixels, map, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
+                paint_path_target(map->path.path_exist, pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
         }
     }
-    pthread_exit(0);
+    return NULL;
 }
 
 static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
@@ -155,7 +153,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
     if (outside || obj_ind == SYM_OBJ_ERR) {
         for (int y = 0; y < obj_size_y; y++) {
             sf::Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
-            memset(pixel, 0, 4 * sizeof(sf::Uint8) * obj_size_x);
+            memset(pixel, 0, 4 * sizeof(sf::Uint8) * (size_t)obj_size_x);
         }
         return;
     }
@@ -185,15 +183,15 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
     }
 }
 
-static void paint_path(sf::Uint8* pixels, Map_t* map, int ix, int iy,
-                       int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
+static void paint_path(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+                       int chunk_x, int chunk_y)
 {
     int ind_obj_path = get_obj_index(SYM_OBJ_PATH);
 
     paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path);
 }
 
-static void paint_path_target(int is_exist, sf::Uint8* pixels, Map_t* map, int ix, int iy,
+static void paint_path_target(int is_exist, sf::Uint8* pixels, int ix, int iy,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path_target = -1;
@@ -255,7 +253,7 @@ void make_screenshot(sf::RenderWindow* window, const char* output_file)
 }
 
 void print_state_info(sf::RenderWindow* window, sf::Text* POS_Text, sf::Text* FPS_Text,
-                      char* pos_string, int len_pos_string, char* fps_string, int len_fps_string,
+                      char* pos_string, size_t len_pos_string, char* fps_string, size_t len_fps_string,
                       std::chrono::_V2::steady_clock::time_point clock_begin,
                       std::chrono::_V2::steady_clock::time_point clock_end,
                       PlayerSet_t* PlayerSet, double* old_fps)

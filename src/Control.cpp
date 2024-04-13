@@ -2,7 +2,7 @@
 #include "FindPath.h"
 
 static void control_mouse_move  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
-static void control_follow_path (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
+static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet);
 static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
 static void move_on_valid (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
 
@@ -81,7 +81,7 @@ int control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet
         control_mouse_move(window, map, PlayerSet);
 
     if (PlayerSet->is_active_mouse_click)
-        control_follow_path(window, map, PlayerSet);
+        control_follow_path(map, PlayerSet);
 
     return 0;
 }
@@ -103,7 +103,7 @@ static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
-static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
 {
     if (!map->path.path_exist && map->path.passed == map->path.count)
         return;
@@ -137,7 +137,7 @@ static void control_follow_path(sf::RenderWindow* window, Map_t* map, PlayerSet_
     }
 
     if (map->path.passed == map->path.count) {
-        PlayerSet->delay_path == 0;
+        PlayerSet->delay_path = 0;
         clean_path(&map->path);
     }
 
@@ -151,8 +151,8 @@ static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet
     int dx = (mouse_pos.x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
     int dy = (mouse_pos.y < PIX_HEIGHT / 2) ? 1 - hbyte2pix : hbyte2pix - 1;
 
-    mouse_pos.x = (mouse_pos.x - PIX_WIDTH  / 2 + dx) / wbyte2pix / wscale_render / PlayerSet->scale;
-    mouse_pos.y = (mouse_pos.y - PIX_HEIGHT / 2 + dy) / hbyte2pix / hscale_render / PlayerSet->scale;
+    mouse_pos.x = (int)((float)((mouse_pos.x - PIX_WIDTH  / 2 + dx) / wbyte2pix / wscale_render) / PlayerSet->scale);
+    mouse_pos.y = (int)((float)((mouse_pos.y - PIX_HEIGHT / 2 + dy) / hbyte2pix / hscale_render) / PlayerSet->scale);
     mouse_pos.x = PlayerSet->px + mouse_pos.x;
     mouse_pos.y = PlayerSet->py + mouse_pos.y;
 
