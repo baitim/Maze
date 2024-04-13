@@ -30,7 +30,7 @@ Object OBJECTS[COUNT_OBJECTS] = {
     {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", 100, 0, {}},
     {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", 0,   0, {}},
     {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   10,  0, {}},
-    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     false,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL, SYM_OBJ_BORDER}},
+    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     false,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL}},
     {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     true,   "images/Texture/TexturePath.png",   0,   0, {}},
     {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     true,   "images/Texture/TextureDest.png",   0,   0, {}},
     {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     true,   "images/Texture/TextureImDest.png", 0,   0, {}},
@@ -53,12 +53,11 @@ static void set_lighting    (Map_t* map);
 static void set_light_lamp  (Map_t* map, int x, int y);
 static void map_write2file  (char* map, FILE* f);
 static void count_free_pos  (char* map, int* count_free, int* frees_ind);
-static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind);
+static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind, PlayerSet_t* PlayerSet);
 static bool check_neighbors (Object* src_obj, char* map, int pos);
-static void set_free_pos    (char* map, PlayerSet_t* PlayerSet);
 static int  is_obj_on_border(int x, int y);
 static int  obj_can_set     (char* map, int map_ind);
-static int  get_obj_index   (int obj_sym);
+static int get_obj_index    (int obj_sym);
 
 int pos_in_pix_window(int x, int y)
 {
@@ -293,15 +292,10 @@ static void map_room_delete(MapRoom_t* map_room)
 
 static void set_lighting(Map_t* map)
 {
-    int ind_obj_lamp = -1;
-    for (int i = 0; i < COUNT_OBJECTS; i++)
-        if (OBJECTS[i].symbol == SYM_OBJ_LAMP)
-            ind_obj_lamp = i;
-
     memset(map->light, 25, BYTE_HEIGHT * BYTE_WIDTH);
     for (int i = 0; i < BYTE_HEIGHT; i++) {
         for (int j = 0; j < BYTE_WIDTH; j++) {
-            if (OBJECTS[ind_obj_lamp].symbol == map->map[i * BYTE_WIDTH + j]) {
+            if (map->map[i * BYTE_WIDTH + j] == SYM_OBJ_LAMP) {
                 set_light_lamp(map, j, i);
             }
         }
@@ -315,7 +309,7 @@ static void set_light_lamp(Map_t* map, int x, int y)
         for (int dx = -light_dist; dx <= light_dist; dx++) {
             int dpos = pos + dy * BYTE_WIDTH + dx;
 
-            if ((dpos < 0) || (dpos > BYTE_HEIGHT * BYTE_WIDTH -1))
+            if ((dpos < 0) || (dpos > BYTE_HEIGHT * BYTE_WIDTH))
                 continue;
 
             if (dx + x >= BYTE_WIDTH || dx + x < 0)
@@ -395,8 +389,7 @@ static void map_fill_empty(char* map, PlayerSet_t* PlayerSet)
     count_free_pos(map, &count_free, frees_ind);
     
     char* free_pos = (char*) calloc((size_t)count_free, sizeof(char));
-    select_free_pos(map, free_pos, count_free, frees_ind);
-    set_free_pos(map, PlayerSet);
+    select_free_pos(map, free_pos, count_free, frees_ind, PlayerSet);
 
     free(free_pos);
     free(frees_ind);
@@ -411,29 +404,33 @@ static void count_free_pos(char* map, int* count_free, int* frees_ind)
                 if (map[pos] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
                     frees_ind[*count_free] = pos;
                     (*count_free)++;
+                    break;
                 }
             }
         }
     }
 }
 
-static void select_free_pos(char* map, char* free_pos, int count_free, int* frees_ind)
+static void select_free_pos(char* map, char* free_pos, int count_free, int* frees_ind, PlayerSet_t* PlayerSet)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         if (OBJECTS[i].count <= 0) 
             continue;
 
-        OBJECTS[i].pos_num_free = (int*) malloc((size_t)OBJECTS[i].count * sizeof(int));
         for (int j = 0; j < OBJECTS[i].count; j++) {
-            int pos = rand() % count_free;
-
             while (1) {
+                int pos = rand() % count_free;
                 if (!free_pos[pos] && check_neighbors(&OBJECTS[i], map, frees_ind[pos])) {
-                    OBJECTS[i].pos_num_free[j] = pos;
+                    map[frees_ind[pos]] = OBJECTS[i].symbol;
+
+                    if (OBJECTS[i].symbol == SYM_OBJ_PLAYER) {
+                        PlayerSet->px = frees_ind[pos] % BYTE_WIDTH;
+                        PlayerSet->py = frees_ind[pos] / BYTE_WIDTH;
+                    }
+
                     free_pos[pos] = 1;
                     break;
                 }
-                pos = rand() % count_free;
             }
         }
     }
@@ -441,62 +438,41 @@ static void select_free_pos(char* map, char* free_pos, int count_free, int* free
 
 static bool check_neighbors(Object* src_obj, char* map, int pos)
 {
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0)
+                continue;
+
+            int dpos = pos + dy * BYTE_WIDTH + dx;
+            if (dpos < 0 || dpos >= BYTE_HEIGHT * BYTE_WIDTH)
+                continue;
+
+            if (src_obj->symbol == SYM_OBJ_LAMP &&
+                map[dpos] == SYM_OBJ_LAMP)
+                return false;
+
+            if (map[dpos] == SYM_OBJ_TUNNEL)
+                return false;
+        }
+    }
+
     if (src_obj->count_neighbors == 0) 
         return true;
 
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {
-            if (abs(dx) + abs(dy) != 1)
-                continue;
-            
-            for (int i = 0; i < src_obj->count_neighbors; i++) {
-                for (int j = 0; j < COUNT_OBJECTS; j++) {
-                    if (OBJECTS[j].symbol == map[pos + dy * BYTE_WIDTH + dx] &&
-                        OBJECTS[j].symbol == src_obj->neighbors[i])
-                        return true;
+            if (abs(dx) + abs(dy) == 1) {
+                for (int i = 0; i < src_obj->count_neighbors; i++) {
+                    for (int j = 0; j < COUNT_OBJECTS; j++) {
+                        if (OBJECTS[j].symbol == map[pos + dy * BYTE_WIDTH + dx] &&
+                            OBJECTS[j].symbol == src_obj->neighbors[i])
+                            return true;
+                    }
                 }
             }
         }
     }
     return false;
-}
-
-static void set_free_pos(char* map, PlayerSet_t* PlayerSet)
-{
-    int count_free = 0;
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            bool skip = false;
-            for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (map[i * BYTE_WIDTH + j] == OBJECTS[k].symbol && !OBJECTS[k].can_go) {
-                    skip = true;
-                    break;
-                }
-            }
-            if (skip) continue;
-
-            for (int k = 0; k < COUNT_OBJECTS; k++) {
-                if (OBJECTS[k].count <= 0) 
-                    continue;
-
-                bool was = false;
-                for (int m = 0; m < OBJECTS[k].count; m++) {
-                    if (count_free == OBJECTS[k].pos_num_free[m]) {
-                        map[i * BYTE_WIDTH + j] = OBJECTS[k].symbol;
-
-                        if (OBJECTS[k].symbol == SYM_OBJ_PLAYER) {
-                            PlayerSet->px = j;
-                            PlayerSet->py = i;
-                        }
-                        was = true;
-                        break;
-                    }
-                }
-                if (was) break;
-            }
-            count_free++;
-        }
-    }
 }
 
 static void map_write2file(char* map, FILE* f) 
@@ -529,19 +505,6 @@ static int obj_can_set(char* map, int map_ind)
     for (int k = 0; k < COUNT_OBJECTS; k++)
         if (map[map_ind] == OBJECTS[k].symbol && !OBJECTS[k].can_go)
             return 0;
-
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            if (dx == 0 && dy == 0) continue;
-            
-            int pos = map_ind + dy * BYTE_WIDTH + dx;
-            if (pos < 0 || pos >= BYTE_HEIGHT * BYTE_WIDTH)
-                continue;
-
-            if (map[pos] == SYM_OBJ_TUNNEL)
-                return 0;
-        }
-    }
     return 1;
 }
 

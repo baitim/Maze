@@ -70,7 +70,6 @@ struct Object {
     const int count_neighbors;
     ObjectsSymbols neighbors[COUNT_OBJECTS];
     unsigned char bytes_color[hbyte2pix * wbyte2pix * 4];
-    int* pos_num_free;
 };
 extern Object OBJECTS[COUNT_OBJECTS];
 
