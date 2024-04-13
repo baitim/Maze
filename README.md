@@ -58,6 +58,8 @@
 * Linking objects to others
 * Realization of light
 * Finding the shortest path when controlling the mouse
+* Optimized by pthreads
+* Connectivity is guaranteed
 
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="50%"></p>
 

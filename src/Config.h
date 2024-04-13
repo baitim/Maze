@@ -20,7 +20,7 @@ const int delay_info = 50;
 const int light_dist = 20;
 const int light_force = 1.2;
 const int MAX_SIZE_INFO_STR = 100;
-const int RENDER_THREADS = 4;
+const int RENDER_THREADS = 3;
 
 typedef struct Path_t_ {
     int path[BYTE_HEIGHT * BYTE_WIDTH];
@@ -47,7 +47,8 @@ typedef enum ObjectsSymbols_ {
     SYM_OBJ_LAMP    = 'L',
     SYM_OBJ_PATH    = '`',
     SYM_OBJ_DEST    = 'V',
-    SYM_OBJ_IMDEST  = 'X'
+    SYM_OBJ_IMDEST  = 'X',
+    SYM_OBJ_TUNNEL  = 'T'
 } ObjectsSymbols;
 
 typedef enum CountObject2Render_ {
@@ -58,7 +59,7 @@ typedef enum CountObject2Render_ {
     COUNT_OBJ_PATH =   -2
 } CountObject2Render;
 
-const int COUNT_OBJECTS = 10;
+const int COUNT_OBJECTS = 11;
 
 struct Object {
     ObjectsSymbols symbol;
