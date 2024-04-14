@@ -35,7 +35,7 @@
 * Use <code>F1</code> to open or close information
 
 ## Example
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/MazeExample.png" width="80%"></p>
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/MazeExample.png" width="90%"></p>
 
 ## CMD commands
 
@@ -61,7 +61,7 @@
 * Optimized by pthreads
 * Connectivity is guaranteed
 
-<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="50%"></p>
+<p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
 
 ## Support
 **This project is created by [baitim](https://t.me/bai_tim)**

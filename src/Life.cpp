@@ -40,7 +40,8 @@ Object OBJECTS[COUNT_OBJECTS] = {
 
 static void map_create_connectivity(char* map);
 static void set_room_connection    (char* map, Tunnel_t* tunnels, int count, int* mst);
-static void draw_line       (char* map, int x1, int y1, int x2, int y2);
+static void get_tunnel      (int* points, int x1, int y1, int x2, int y2);
+static void draw_circle     (char* map, int* points);
 static void get_graph_mst   (int* graph, int count, int* mst);
 static void make_graph      (MapRoom_t* map_room, int* graph, Tunnel_t* tunnels);
 static void paint_graph     (MapRoom_t* map_room, char* map);
@@ -57,7 +58,7 @@ static void select_free_pos (char* map, char* free_pos, int count_free, int* fre
 static bool check_neighbors (Object* src_obj, char* map, int pos);
 static int  is_obj_on_border(int x, int y);
 static int  obj_can_set     (char* map, int map_ind);
-static int get_obj_index    (int obj_sym);
+static int  get_obj_index   (int obj_sym);
 
 int pos_in_pix_window(int x, int y)
 {
@@ -124,11 +125,14 @@ static void set_room_connection(char* map, Tunnel_t* tunnels, int count, int* ms
         int x2 = finish % BYTE_WIDTH;
         int y2 = finish / BYTE_WIDTH;
 
-        draw_line(map, x1, y1, x2, y2);
+        int* points = (int*) calloc(sizeof(int), BYTE_HEIGHT * BYTE_WIDTH);
+        get_tunnel(points, x1, y1, x2, y2);
+        draw_circle(map, points);
+        free(points);
     }
 }
 
-static void draw_line(char* map, int x1, int y1, int x2, int y2)
+static void get_tunnel(int* points, int x1, int y1, int x2, int y2)
 {
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
@@ -138,18 +142,43 @@ static void draw_line(char* map, int x1, int y1, int x2, int y2)
     int e2;
     
     int x = x1, y = y1;
+    points[y * BYTE_WIDTH + x] = 1;
     while (!(x == x2 && y == y2)) {
-        map[y * BYTE_WIDTH + x] = SYM_OBJ_TUNNEL;
         e2 = 2 * err;
         if (e2 > -dy) {
             err -= dy;
             x += sx;
         }
 
-        map[y * BYTE_WIDTH + x] = SYM_OBJ_TUNNEL;
+        points[y * BYTE_WIDTH + x] = 1;
         if (e2 < dx) {
             err += dx;
             y += sy;
+        }
+        points[y * BYTE_WIDTH + x] = 1;
+    }
+}
+
+static void draw_circle(char* map, int* points)
+{
+    for (int pos = 0; pos < BYTE_HEIGHT * BYTE_WIDTH; pos++) {
+        if (points[pos] == 0) continue;
+
+        int x = pos % BYTE_WIDTH;
+        int y = pos / BYTE_WIDTH;
+        for (int dy = -TUNNELS_WIDTH; dy <= TUNNELS_WIDTH; dy++) {
+            for (int dx = -TUNNELS_WIDTH; dx <= TUNNELS_WIDTH; dx++) {
+                int dpos = pos + dy * BYTE_WIDTH + dx;
+
+                if (dpos < 0 || dpos >= BYTE_HEIGHT * BYTE_WIDTH)
+                    continue;
+
+                if (is_obj_on_border(x + dx, y + dy))
+                    continue;
+
+                if (dx * dx + dy * dy <= TUNNELS_WIDTH)
+                    map[dpos] = SYM_OBJ_TUNNEL;
+            }
         }
     }
 }
@@ -332,14 +361,14 @@ static void set_light_lamp(Map_t* map, int x, int y)
 
 static void map_gen(char* map)
 {
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            int pos = i * BYTE_WIDTH + j;
-            if (is_obj_on_border(i, j))
+    for (int y = 0; y < BYTE_HEIGHT; y++) {
+        for (int x = 0; x < BYTE_WIDTH; x++) {
+            int pos = y * BYTE_WIDTH + x;
+            if (is_obj_on_border(x, y))
                 map[pos] = SYM_OBJ_BORDER;
 
-            int x = (rand() % 100 + 1);
-            if (x >= CHANCE_LIFE)
+            int chance = (rand() % 100 + 1);
+            if (chance >= CHANCE_LIFE)
                 map[pos] = SYM_OBJ_WALL;
             else
                 map[pos] = SYM_OBJ_ROAD;
@@ -350,10 +379,10 @@ static void map_gen(char* map)
 static void map_step(char* map)
 {
     char new_m[BYTE_HEIGHT * BYTE_WIDTH];
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            int pos = i * BYTE_WIDTH + j;
-            if (is_obj_on_border(i, j)) {
+    for (int y = 0; y < BYTE_HEIGHT; y++) {
+        for (int x = 0; x < BYTE_WIDTH; x++) {
+            int pos = y * BYTE_WIDTH + x;
+            if (is_obj_on_border(x, y)) {
                 new_m[pos] = SYM_OBJ_BORDER;
                 continue;
             }
@@ -362,7 +391,7 @@ static void map_step(char* map)
                 for (int dy = -1; dy <= 1; dy++) {
                     if (!(((dx) != 0) || ((dy) != 0)))
                         continue;
-                    if (map[(i + dx) * BYTE_WIDTH + (j + dy)] == SYM_OBJ_WALL)
+                    if (map[(y + dx) * BYTE_WIDTH + (x + dy)] == SYM_OBJ_WALL)
                         byte_val_neighbours++;
                 }
             }
@@ -374,9 +403,9 @@ static void map_step(char* map)
                 new_m[pos] = SYM_OBJ_ROAD;
         }
     }
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            int pos = i * BYTE_WIDTH + j;
+    for (int y = 0; y < BYTE_HEIGHT; y++) {
+        for (int x = 0; x < BYTE_WIDTH; x++) {
+            int pos = y * BYTE_WIDTH + x;
             map[pos] = new_m[pos];
         }
     }
@@ -397,9 +426,9 @@ static void map_fill_empty(char* map, PlayerSet_t* PlayerSet)
 
 static void count_free_pos(char* map, int* count_free, int* frees_ind)
 {
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            int pos = i * BYTE_WIDTH + j;
+    for (int y = 0; y < BYTE_HEIGHT; y++) {
+        for (int x = 0; x < BYTE_WIDTH; x++) {
+            int pos = y * BYTE_WIDTH + x;
             for (int k = 0; k < COUNT_OBJECTS; k++) {
                 if (map[pos] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
                     frees_ind[*count_free] = pos;
@@ -448,7 +477,7 @@ static bool check_neighbors(Object* src_obj, char* map, int pos)
                 continue;
 
             if (src_obj->symbol == SYM_OBJ_LAMP &&
-                map[dpos] == SYM_OBJ_LAMP)
+                (map[dpos] == SYM_OBJ_LAMP || map[dpos] == SYM_OBJ_BORDER))
                 return false;
 
             if (map[dpos] == SYM_OBJ_TUNNEL)
@@ -497,7 +526,7 @@ static void map_write2file(char* map, FILE* f)
 
 static int is_obj_on_border(int x, int y)
 {
-    return (x == 0 || y == 0 || x == BYTE_HEIGHT - 1 || y == BYTE_WIDTH - 1);
+    return (x == 0 || y == 0 || x == BYTE_WIDTH - 1 || y == BYTE_HEIGHT - 1);
 }
 
 static int obj_can_set(char* map, int map_ind)

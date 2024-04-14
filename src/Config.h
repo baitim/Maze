@@ -7,8 +7,8 @@ const int PIX_HEIGHT = 1000;
 const int PIX_WIDTH  = 1200;
 const int BYTE_HEIGHT = PIX_HEIGHT / hbyte2pix;
 const int BYTE_WIDTH = PIX_WIDTH  / wbyte2pix;
-const int STEPS_GEN = 16;
-const double CHANCE_LIFE = 52;
+const int STEPS_GEN = 18;
+const double CHANCE_LIFE = 51;
 const int STAY_IN_LIFE = 4;
 const int NEW_LIFE = 5;
 const int hscale_render = 4;
@@ -21,6 +21,7 @@ const int light_dist = 20;
 const double light_force = 1.f;
 const int MAX_SIZE_INFO_STR = 100;
 const int RENDER_THREADS = 3;
+const int TUNNELS_WIDTH = 2;
 
 typedef struct Path_t_ {
     int path[BYTE_HEIGHT * BYTE_WIDTH];
@@ -55,7 +56,7 @@ typedef enum CountObject2Render_ {
     COUNT_OBJ_INF =    -1,
     COUNT_OBJ_PLAYER =  1,
     COUNT_OBJ_COIN =   50,
-    COUNT_OBJ_LAMP =   70,
+    COUNT_OBJ_LAMP =   80,
     COUNT_OBJ_PATH =   -2
 } CountObject2Render;
 
