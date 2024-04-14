@@ -7,8 +7,9 @@ const int PIX_HEIGHT = 1000;
 const int PIX_WIDTH  = 1200;
 const int BYTE_HEIGHT = PIX_HEIGHT / hbyte2pix;
 const int BYTE_WIDTH = PIX_WIDTH  / wbyte2pix;
+const int SCREEN_BYTES_COUNT = BYTE_HEIGHT * BYTE_WIDTH;
 const int STEPS_GEN = 18;
-const double CHANCE_LIFE = 51;
+const double CHANCE_LIFE = 52;
 const int STAY_IN_LIFE = 4;
 const int NEW_LIFE = 5;
 const int hscale_render = 4;
@@ -22,9 +23,11 @@ const double light_force = 1.f;
 const int MAX_SIZE_INFO_STR = 100;
 const int RENDER_THREADS = 3;
 const int TUNNELS_WIDTH = 2;
+const int HILL_SLOPE = 40;
+const int MAX_HILL_HEIGHT = 5;
 
 typedef struct Path_t_ {
-    int path[BYTE_HEIGHT * BYTE_WIDTH];
+    int path[SCREEN_BYTES_COUNT];
     int count;
     int passed;
     int path_target;
@@ -32,9 +35,10 @@ typedef struct Path_t_ {
 } Path_t;
 
 typedef struct Map_t_ {
-    char map[BYTE_HEIGHT * BYTE_WIDTH];
-    unsigned char col[BYTE_HEIGHT * BYTE_WIDTH * 3];
-    unsigned char light[BYTE_HEIGHT * BYTE_WIDTH];
+    char map[SCREEN_BYTES_COUNT];
+    unsigned char col[SCREEN_BYTES_COUNT * 3];
+    unsigned char light[SCREEN_BYTES_COUNT];
+    unsigned char shadow[SCREEN_BYTES_COUNT];
     Path_t path;
 } Map_t;
 

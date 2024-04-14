@@ -6,6 +6,7 @@
 
 #include "Life.h"
 #include "Math.h"
+#include "Queue.h"
 
 typedef struct Tunnel_t_ {
     int point_start;
@@ -47,18 +48,23 @@ static void make_graph      (MapRoom_t* map_room, int* graph, Tunnel_t* tunnels)
 static void paint_graph     (MapRoom_t* map_room, char* map);
 static int  paint_subgraph  (int v, int color, int* colors, char* map);
 static void map_room_delete (MapRoom_t* map_room);
+static void make_hills      (Map_t* map);
+
+static int  step_get_height (int* height, char* map, int x, int y, Queue_t** queue);
+static int  get_height      (char* map, int pos);
+
 static void map_gen         (char* map);
 static void map_step        (char* map);
 static void map_fill_empty  (char* map, PlayerSet_t* PlayerSet);
 static void set_lighting    (Map_t* map);
 static void set_light_lamp  (Map_t* map, int x, int y);
-static void map_write2file  (char* map, FILE* f);
+static void map_write2file  (char* map, FILE* file);
 static void count_free_pos  (char* map, int* count_free, int* frees_ind);
 static void select_free_pos (char* map, char* free_pos, int count_free, int* frees_ind, PlayerSet_t* PlayerSet);
 static bool check_neighbors (Object* src_obj, char* map, int pos);
 static int  is_obj_on_border(int x, int y);
 static int  obj_can_set     (char* map, int map_ind);
-int is_pos_in_byte_window   (int pos);
+static int is_pos_in_byte_window (int pos);
 
 int pos_in_pix_window(int x, int y)
 {
@@ -67,9 +73,10 @@ int pos_in_pix_window(int x, int y)
 
 void map_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
 {
-    memset(map->map,   0, sizeof(char) * BYTE_HEIGHT * BYTE_WIDTH);
-    memset(map->light, 0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH);
-    memset(map->col,   0, sizeof(unsigned char) * BYTE_HEIGHT * BYTE_WIDTH * 3);
+    memset(map->map,    0, sizeof(char) * SCREEN_BYTES_COUNT);
+    memset(map->light,  0, sizeof(unsigned char) * SCREEN_BYTES_COUNT);
+    memset(map->col,    0, sizeof(unsigned char) * SCREEN_BYTES_COUNT * 3);
+    memset(map->shadow, 0, sizeof(unsigned char) * SCREEN_BYTES_COUNT);
     
     map_gen(map->map);
 
@@ -80,6 +87,8 @@ void map_create(Map_t* map, PlayerSet_t* PlayerSet, char* output_file)
     map_create_connectivity(map->map);
 
     map_fill_empty(map->map, PlayerSet);
+
+    make_hills(map);
 
     set_lighting(map);
 
@@ -125,7 +134,7 @@ static void set_room_connection(char* map, Tunnel_t* tunnels, int count, int* ms
         int x2 = finish % BYTE_WIDTH;
         int y2 = finish / BYTE_WIDTH;
 
-        int* points = (int*) calloc(sizeof(int), BYTE_HEIGHT * BYTE_WIDTH);
+        int* points = (int*) calloc(sizeof(int), SCREEN_BYTES_COUNT);
         get_tunnel(points, x1, y1, x2, y2);
         draw_circle(map, points);
         free(points);
@@ -161,7 +170,7 @@ static void get_tunnel(int* points, int x1, int y1, int x2, int y2)
 
 static void draw_circle(char* map, int* points)
 {
-    for (int pos = 0; pos < BYTE_HEIGHT * BYTE_WIDTH; pos++) {
+    for (int pos = 0; pos < SCREEN_BYTES_COUNT; pos++) {
         if (points[pos] == 0) continue;
 
         int x = pos % BYTE_WIDTH;
@@ -188,7 +197,7 @@ void get_graph_mst(int* graph, int count, int* mst)
     int* weight = (int*) calloc(sizeof(int), (size_t)count);
     int* visited = (int*) calloc(sizeof(int), (size_t)count);
     for (int i = 0; i < count; i++) {
-        weight[i] = BYTE_HEIGHT * BYTE_WIDTH;
+        weight[i] = SCREEN_BYTES_COUNT;
         visited[i] = 0;
     }
 
@@ -198,7 +207,7 @@ void get_graph_mst(int* graph, int count, int* mst)
     int u;
     for (int i = 0; i < count; i++) {
         
-        int min_weight = BYTE_HEIGHT * BYTE_WIDTH;
+        int min_weight = SCREEN_BYTES_COUNT;
         for (int v = 0; v < count; v++) {
             if (visited[v] == 0 && weight[v] < min_weight) {
                 min_weight = weight[v];
@@ -226,7 +235,7 @@ static void make_graph(MapRoom_t* map_room, int* graph, Tunnel_t* tunnels)
 {
     for (int i = 0; i < map_room->count_rooms; i++) {
         for (int j = i + 1; j < map_room->count_rooms; j++) {
-            int min_dist = BYTE_HEIGHT * BYTE_WIDTH;
+            int min_dist = SCREEN_BYTES_COUNT;
             int start_min, finish_min;
             for (int a = 0; a < map_room->obj_count[i]; a++) {
                 int x1 = map_room->obj_ind[i][a].x;
@@ -256,11 +265,11 @@ static void make_graph(MapRoom_t* map_room, int* graph, Tunnel_t* tunnels)
 
 static void paint_graph(MapRoom_t* map_room, char* map)
 {
-    int* colors = (int*) calloc(sizeof(int), (size_t)(BYTE_HEIGHT * BYTE_WIDTH));
-    int* childs = (int*) calloc(sizeof(int), (size_t)(BYTE_HEIGHT * BYTE_WIDTH));
+    int* colors = (int*) calloc(sizeof(int), (size_t)(SCREEN_BYTES_COUNT));
+    int* childs = (int*) calloc(sizeof(int), (size_t)(SCREEN_BYTES_COUNT));
     
     int color = 1;
-    for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++) {
+    for (int i = 0; i < SCREEN_BYTES_COUNT; i++) {
         if (colors[i] == 0 && obj_can_set(map, i)) {
             childs[color - 1] += paint_subgraph(i, color, colors, map);
             color++;
@@ -275,7 +284,7 @@ static void paint_graph(MapRoom_t* map_room, char* map)
     for (int i = 0; i < count_rooms; i++) 
         map_room->obj_ind[i] = (Point_t*) calloc(sizeof(Point_t), (size_t)(childs[i]));
 
-    for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++) {
+    for (int i = 0; i < SCREEN_BYTES_COUNT; i++) {
         if (colors[i] > 0) {
             int ind = map_room->obj_count[colors[i] - 1];
 
@@ -300,12 +309,12 @@ static int paint_subgraph(int v, int color, int* colors, char* map)
             if (abs(dx) + abs(dy) != 1)
                 continue;
 
-            int pos = v + dy * BYTE_WIDTH + dx;
-            if (!is_pos_in_byte_window(pos))
+            int dpos = v + dy * BYTE_WIDTH + dx;
+            if (!is_pos_in_byte_window(dpos))
                     continue;
 
-            if (colors[pos] == 0 && obj_can_set(map, pos))
-                count_childs += paint_subgraph(pos, color, colors, map);
+            if (colors[dpos] == 0 && obj_can_set(map, dpos))
+                count_childs += paint_subgraph(dpos, color, colors, map);
         }
     }
     return count_childs + 1;
@@ -319,16 +328,78 @@ static void map_room_delete(MapRoom_t* map_room)
     free(map_room->obj_count);
 }
 
-static void set_lighting(Map_t* map)
+static void make_hills(Map_t* map)
 {
-    memset(map->light, 25, BYTE_HEIGHT * BYTE_WIDTH);
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++) {
-            if (map->map[i * BYTE_WIDTH + j] == SYM_OBJ_LAMP) {
-                set_light_lamp(map, j, i);
+    for (int pos = 0; pos < SCREEN_BYTES_COUNT; pos++) {
+        if (map->map[pos] == SYM_OBJ_WALL) {
+            int height = get_height(map->map, pos);
+            map->shadow[pos] = (MAX_HILL_HEIGHT - MIN(MAX_HILL_HEIGHT, height)) * HILL_SLOPE;
+        }
+    }
+}
+
+static int step_get_height(int* height, char* map, int x, int y, Queue_t** queue)
+{
+    int len = height[BYTE_WIDTH * y + x];
+    int* new_queue;
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (abs(dx) + abs(dy) == 0)
+                continue;
+
+            int dpos = BYTE_WIDTH * (y + dy) + x + dx;
+
+            if (map[dpos] == SYM_OBJ_WALL) {
+                new_queue = &height[dpos];
+
+                if (*new_queue == 0 || *new_queue > len + 1) {
+                    *new_queue = len + 1;
+                    enqueue(queue, x + dx, y + dy);
+                }
+            } else {
+                return dpos;
             }
         }
     }
+    return -1;
+}
+
+static int get_height(char* map, int pos)
+{
+    Queue_t* queue = NULL;
+
+    int height[SCREEN_BYTES_COUNT] = {};
+
+    height[pos] = 1;
+    enqueue(&queue, pos % BYTE_WIDTH, pos / BYTE_WIDTH);
+    while (queue) {
+        int x, y;
+        if (!dequeue(&queue, &x, &y)) {
+            
+            int res_step = step_get_height(height, map, x, y, &queue);
+            if (res_step != -1) {
+                int x1 = pos % BYTE_WIDTH;
+                int y1 = pos / BYTE_WIDTH;
+                int x2 = res_step % BYTE_WIDTH;
+                int y2 = res_step / BYTE_WIDTH;
+                return MAX(abs(x1 - x2), abs(y1 - y2));
+            }
+        }
+    }
+    dtor_queue(queue, queue);
+    return MAX_HILL_HEIGHT;
+}
+
+static void set_lighting(Map_t* map)
+{
+    memset(map->light, 25, SCREEN_BYTES_COUNT);
+    for (int i = 0; i < BYTE_HEIGHT; i++)
+        for (int j = 0; j < BYTE_WIDTH; j++)
+            if (map->map[i * BYTE_WIDTH + j] == SYM_OBJ_LAMP)
+                set_light_lamp(map, j, i);
+
+    for (int pos = 0; pos < SCREEN_BYTES_COUNT; pos++)
+        map->light[pos]= (unsigned char)MAX(0, (int)map->light[pos] - (int)map->shadow[pos]);
 }
 
 static void set_light_lamp(Map_t* map, int x, int y)
@@ -378,7 +449,7 @@ static void map_gen(char* map)
 
 static void map_step(char* map)
 {
-    char new_m[BYTE_HEIGHT * BYTE_WIDTH];
+    char new_m[SCREEN_BYTES_COUNT];
     for (int y = 0; y < BYTE_HEIGHT; y++) {
         for (int x = 0; x < BYTE_WIDTH; x++) {
             int pos = y * BYTE_WIDTH + x;
@@ -414,7 +485,7 @@ static void map_step(char* map)
 static void map_fill_empty(char* map, PlayerSet_t* PlayerSet)
 {
     int count_free = 0;
-    int* frees_ind = (int*) calloc(BYTE_HEIGHT * BYTE_WIDTH,  sizeof(int));
+    int* frees_ind = (int*) calloc(SCREEN_BYTES_COUNT,  sizeof(int));
     count_free_pos(map, &count_free, frees_ind);
     
     char* free_pos = (char*) calloc((size_t)count_free, sizeof(char));
@@ -504,23 +575,12 @@ static bool check_neighbors(Object* src_obj, char* map, int pos)
     return false;
 }
 
-static void map_write2file(char* map, FILE* f) 
+static void map_write2file(char* map, FILE* file) 
 {
-    int count_free = 0;
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++)
-            if (map[i * BYTE_WIDTH + j] == ' ') count_free++;
-    }
-    int number_i = rand() % count_free;
-    int number_o = rand() % count_free;
-    while (number_o == number_i)
-         number_o = rand() % count_free;
-
-    count_free = 0;
-    for (int i = 0; i < BYTE_HEIGHT; i++) {
-        for (int j = 0; j < BYTE_WIDTH; j++)
-            fprintf(f, "%c", map[i * BYTE_WIDTH + j]);
-        fprintf(f, "\n");
+    for (int y = 0; y < BYTE_HEIGHT; y++) {
+        for (int x = 0; x < BYTE_WIDTH; x++)
+            fprintf(file, "%c", map[y * BYTE_WIDTH + x]);
+        fprintf(file, "\n");
     }
 }
 
@@ -537,7 +597,7 @@ static int obj_can_set(char* map, int map_ind)
     return 1;
 }
 
-int is_pos_in_byte_window(int pos)
+static int is_pos_in_byte_window(int pos)
 {
-    return (pos >= 0 && pos < BYTE_HEIGHT * BYTE_WIDTH);
+    return (pos >= 0 && pos < SCREEN_BYTES_COUNT);
 }

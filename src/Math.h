@@ -5,8 +5,8 @@
 
 static const double EPSILON = 1e-9;
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) >= (b)) ? (a) : (b))
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
 
 char clamp_char     (char x, char min, char max);
 unsigned char clamp_uchar(unsigned char x, unsigned char min, unsigned char max);

@@ -4,53 +4,12 @@
 
 #include "FindPath.h"
 #include "Math.h"
+#include "Queue.h"
 
-typedef struct Queue_t_ {
-    int x;
-    int y;
-    struct Queue_t_* next;
-} Queue_t;
-
-static int  enqueue     (Queue_t** queue, int x, int y);
-static int  dequeue     (Queue_t** queue, int* x, int* y);
 static int  step        (int* distance, char* map, int x, int y, Queue_t** queue);
 static void is_step_par (int* distance, char* map, int* x, int* y);
-static void dtor_queue  (Queue_t* queue, Queue_t* head);
 static int set_shortest_path (int* distance, Map_t* map, PlayerSet_t* PlayerSet,
                               sf::Vector2i* mouse_pos, Path_t* path);
-
-static int enqueue(Queue_t** queue, int x, int y)
-{
-    Queue_t* new_queue = (Queue_t*) malloc(sizeof(Queue_t));
-    if (!*queue) {
-        *new_queue = (Queue_t) {x ,y, new_queue};
-        *queue = new_queue;
-    }
-    else {
-        *new_queue = (Queue_t) {x, y, (*queue)->next};
-        (*queue)->next = new_queue;
-        *queue = (*queue)->next;
-    }
-    return 0;
-}
-
-static int dequeue(Queue_t** queue, int* x, int* y)
-{
-    Queue_t* next;
-    if (!*queue) return 1;
-    next = (*queue)->next;
-    *x = next->x;
-    *y = next->y;
-    if (*queue == (next)) {
-        free(*queue);
-        *queue = NULL;
-        return 0;
-    } else {    
-        (*queue)->next = next->next;
-        free(next);
-        return 0;
-    }
-}
 
 static int step(int* distance, char* map, int x, int y, Queue_t** queue)
 {
@@ -99,19 +58,6 @@ static int set_shortest_path(int* distance, Map_t* map, PlayerSet_t* PlayerSet,
         if (old_x == x && old_y == y) return 0;
     }
     return 1;
-}
-
-static void dtor_queue(Queue_t* queue, Queue_t* head)
-{
-    if (!queue) return;
-
-    if (queue->next == head) {
-        free(queue);
-        return;
-    }
-
-    dtor_queue(queue->next, head);
-    free(queue);
 }
 
 void clean_path(Path_t* path)
