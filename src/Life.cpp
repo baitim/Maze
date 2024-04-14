@@ -58,7 +58,7 @@ static void select_free_pos (char* map, char* free_pos, int count_free, int* fre
 static bool check_neighbors (Object* src_obj, char* map, int pos);
 static int  is_obj_on_border(int x, int y);
 static int  obj_can_set     (char* map, int map_ind);
-static int  get_obj_index   (int obj_sym);
+int is_pos_in_byte_window   (int pos);
 
 int pos_in_pix_window(int x, int y)
 {
@@ -170,7 +170,7 @@ static void draw_circle(char* map, int* points)
             for (int dx = -TUNNELS_WIDTH; dx <= TUNNELS_WIDTH; dx++) {
                 int dpos = pos + dy * BYTE_WIDTH + dx;
 
-                if (dpos < 0 || dpos >= BYTE_HEIGHT * BYTE_WIDTH)
+                if (!is_pos_in_byte_window(pos))
                     continue;
 
                 if (is_obj_on_border(x + dx, y + dy))
@@ -301,8 +301,8 @@ static int paint_subgraph(int v, int color, int* colors, char* map)
                 continue;
 
             int pos = v + dy * BYTE_WIDTH + dx;
-            if (pos >= BYTE_HEIGHT * BYTE_WIDTH || pos < 0)
-                continue;
+            if (!is_pos_in_byte_window(pos))
+                    continue;
 
             if (colors[pos] == 0 && obj_can_set(map, pos))
                 count_childs += paint_subgraph(pos, color, colors, map);
@@ -338,8 +338,8 @@ static void set_light_lamp(Map_t* map, int x, int y)
         for (int dx = -light_dist; dx <= light_dist; dx++) {
             int dpos = pos + dy * BYTE_WIDTH + dx;
 
-            if ((dpos < 0) || (dpos > BYTE_HEIGHT * BYTE_WIDTH))
-                continue;
+            if (!is_pos_in_byte_window(dpos))
+                    continue;
 
             if (dx + x >= BYTE_WIDTH || dx + x < 0)
                 continue;
@@ -387,11 +387,11 @@ static void map_step(char* map)
                 continue;
             }
             int byte_val_neighbours = 0;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    if (!(((dx) != 0) || ((dy) != 0)))
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (!((dx != 0) || (dy != 0)))
                         continue;
-                    if (map[(y + dx) * BYTE_WIDTH + (x + dy)] == SYM_OBJ_WALL)
+                    if (map[pos + dy * BYTE_WIDTH + dx] == SYM_OBJ_WALL)
                         byte_val_neighbours++;
                 }
             }
@@ -473,8 +473,8 @@ static bool check_neighbors(Object* src_obj, char* map, int pos)
                 continue;
 
             int dpos = pos + dy * BYTE_WIDTH + dx;
-            if (dpos < 0 || dpos >= BYTE_HEIGHT * BYTE_WIDTH)
-                continue;
+            if (!is_pos_in_byte_window(dpos))
+                    continue;
 
             if (src_obj->symbol == SYM_OBJ_LAMP &&
                 (map[dpos] == SYM_OBJ_LAMP || map[dpos] == SYM_OBJ_BORDER))
@@ -537,10 +537,7 @@ static int obj_can_set(char* map, int map_ind)
     return 1;
 }
 
-static int get_obj_index(int obj_sym)
+int is_pos_in_byte_window(int pos)
 {
-    for (int i = 0; i < COUNT_OBJECTS; i++)
-        if (OBJECTS[i].symbol == obj_sym)
-            return i;
-    return -1;
+    return (pos >= 0 && pos < BYTE_HEIGHT * BYTE_WIDTH);
 }
