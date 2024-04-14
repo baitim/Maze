@@ -60,6 +60,7 @@
 * Finding the shortest path when controlling the mouse
 * Optimized by pthreads
 * Connectivity is guaranteed
+* Height difference by shadows
 
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
 
