@@ -4,12 +4,15 @@
 #include "Input.h"
 #include "Config.h"
 
-void objects_get()
+ErrorCode objects_get()
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
         sf::Image color_texture;
-        color_texture.loadFromFile(OBJECTS[i].name_src_file);
+        int is_load = color_texture.loadFromFile(OBJECTS[i].name_src_file);
+        if (!is_load) return ERROR_CANT_LOAD_OBJECT;
+
         const sf::Uint8* ByteBufferColor = color_texture.getPixelsPtr();
         memcpy(&OBJECTS[i].bytes_color, ByteBufferColor, hbyte2pix * wbyte2pix * 4);
     }
+    return ERROR_NO;
 }

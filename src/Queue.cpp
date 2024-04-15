@@ -1,10 +1,12 @@
 #include <stdlib.h>
-
+#include <stdio.h>
 #include "Queue.h"
 
-int enqueue(Queue_t** queue, int x, int y)
+ErrorCode enqueue(Queue_t** queue, int x, int y)
 {
     Queue_t* new_queue = (Queue_t*) malloc(sizeof(Queue_t));
+    if (!new_queue) return ERROR_ALLOC_FAIL;
+
     if (!*queue) {
         *new_queue = (Queue_t) {x ,y, new_queue};
         *queue = new_queue;
@@ -14,7 +16,7 @@ int enqueue(Queue_t** queue, int x, int y)
         (*queue)->next = new_queue;
         *queue = (*queue)->next;
     }
-    return 0;
+    return ERROR_NO;
 }
 
 int dequeue(Queue_t** queue, int* x, int* y)

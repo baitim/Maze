@@ -4,8 +4,9 @@
 #include <SFML/Graphics.hpp>
 
 #include "Config.h"
+#include "Errors.h"
 
-struct PlayerSet_t {
+typedef struct PlayerSet_t_ {
     bool is_active_mouse_move;
     bool is_active_mouse_click;
     bool is_info;
@@ -15,10 +16,11 @@ struct PlayerSet_t {
     int delay_path;
     int delay_info;
     float scale, Kscale;
-};
+} PlayerSet_t;
 
-int control_event  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, sf::Event* event);
-int control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
-int passable_object(char* map, int x, int y);
+ErrorCode control_event  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet,
+                          sf::Event* event, int* is_exit);
+void      control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
+int       passable_object(char* map, int x, int y);
 
 #endif // SRC_CONTROL_H

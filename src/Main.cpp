@@ -28,25 +28,27 @@ int main(int argc, const char *argv[])
     PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.3f};
 
     error = cmd_data_init(argc, argv, &cmd_data);
-    if (error) return error;
+    if (error) goto error;
 
-    if (cmd_data.is_help)
-        print_help();
+    error = cmd_data_callback(&cmd_data);
+    if (error) goto error;
 
     error = cmd_data_verify(&cmd_data);
-    if (error) return error;
+    if (error) goto error;
 
-    objects_get();
+    error = objects_get();
+    if (error) goto error;
     
-    map_create(&map, &PlayerSet, cmd_data.map_txt_file);
+    error = map_create(&map, &PlayerSet, cmd_data.map_txt_file);
+    if (error) goto error;
 
     error = window_prepare(&window, &texture, &sprite, &pixels, &font, cmd_data.font_file,
                            &POS_Text, &FPS_Text);
-    if (error) return error;
+    if (error) goto error;
 
     error = window_default_loop(&window, &texture, &sprite, pixels, &POS_Text, &FPS_Text,
                                 &map, &PlayerSet, cmd_data.screenshot_file);
-    if (error) return error;
+    if (error) goto error;
 
     goto finally;
 

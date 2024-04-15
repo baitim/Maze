@@ -6,13 +6,15 @@
 #include "Math.h"
 #include "Queue.h"
 
-static int  step        (int* distance, char* map, int x, int y, Queue_t** queue);
-static void is_step_par (int* distance, char* map, int* x, int* y);
-static int set_shortest_path (int* distance, Map_t* map, PlayerSet_t* PlayerSet,
+static ErrorCode step        (int* distance, char* map, int x, int y, Queue_t** queue);
+static void is_step_par      (int* distance, char* map, int* x, int* y);
+static int  set_shortest_path(int* distance, Map_t* map, PlayerSet_t* PlayerSet,
                               sf::Vector2i* mouse_pos, Path_t* path);
 
-static int step(int* distance, char* map, int x, int y, Queue_t** queue)
+static ErrorCode step(int* distance, char* map, int x, int y, Queue_t** queue)
 {
+    ErrorCode error = ERROR_NO;
+
     int len = distance[BYTE_WIDTH * y + x];
     int* new_queue;
     for (int dx = -1; dx <= 1; dx++) {
@@ -22,12 +24,13 @@ static int step(int* distance, char* map, int x, int y, Queue_t** queue)
 
                 if (*new_queue == 0 || *new_queue > len + 1) {
                     *new_queue = len + 1;
-                    enqueue(queue, x + dx, y + dy);
+                    error = enqueue(queue, x + dx, y + dy);
+                    if (error) return error;
                 }
             }
         }
     }
-    return 0;
+    return ERROR_NO;
 }
 
 static void is_step_par(int* distance, char* map, int* x, int* y)
@@ -70,8 +73,9 @@ void clean_path(Path_t* path)
     path->path_target = -1;
 }
 
-void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_pos)
+ErrorCode find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_pos)
 {
+    ErrorCode error = ERROR_NO;
     Queue_t* queue = NULL;
 
     clean_path(&map->path);
@@ -79,12 +83,14 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
     map->path.path_target = BYTE_WIDTH * mouse_pos->y + mouse_pos->x;
     
     if (!passable_object(map->map, mouse_pos->x, mouse_pos->y))
-        return;
+        return ERROR_NO;
 
     int distance[BYTE_HEIGHT * BYTE_WIDTH] = {};
 
     distance[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = 1;
-    enqueue(&queue, PlayerSet->px, PlayerSet->py);
+    error = enqueue(&queue, PlayerSet->px, PlayerSet->py);
+    if (error) return error;
+
     while (queue) {
         int x, y;
         if (!dequeue(&queue, &x, &y)) {
@@ -92,10 +98,11 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
                 map->path.path_exist = 1;
                 break;
             }
-            step(distance, map->map, x, y, &queue);
+            error = step(distance, map->map, x, y, &queue);
+            if (error) return error;
         } else {
             map->path.path_exist = 0;
-            return;
+            return ERROR_NO;
         }
     }
     dtor_queue(queue, queue);
@@ -104,10 +111,12 @@ void find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, sf::Vector2i* mouse_
     if (!is_path_exist) {
         clean_path(&map->path);
         map->path.path_target = BYTE_WIDTH * mouse_pos->y + mouse_pos->x;
-        return;
+        return ERROR_NO;
     }
 
     for (int i = 0; i < BYTE_HEIGHT * BYTE_WIDTH; i++)
         if (map->path.path[i] != 0)
             map->path.path[i] = map->path.count - map->path.path[i] + 1;
+
+    return ERROR_NO;
 }

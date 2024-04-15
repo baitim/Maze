@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "Output.h"
 #include "ProcessCmd.h"
 
 const CmdLineOption_t OPTIONS[] = {
@@ -72,6 +73,14 @@ ErrorCode cmd_data_verify(CmdInputData_t* cmd_data)
 
     if (!cmd_data->font_file)
         return ERROR_INVALID_FILE_FONT;
+
+    return ERROR_NO;
+}
+
+ErrorCode cmd_data_callback(CmdInputData_t* cmd_data)
+{
+    if (cmd_data->is_help)
+        print_help();
 
     return ERROR_NO;
 }

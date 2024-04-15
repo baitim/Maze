@@ -3,22 +3,27 @@
 
 static void control_mouse_move  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
 static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet);
-static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
-static void move_on_valid (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
+static ErrorCode callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
+static void move_on_valid       (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
 
-int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, sf::Event* event)
+ErrorCode control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet,
+                        sf::Event* event, int* is_exit)
 {
+    ErrorCode error = ERROR_NO;
+
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     int dx = 0, dy = 0;
     switch (event->type) {
         case sf::Event::Closed:
-            return 1;
+            *is_exit = 1;
+            return ERROR_NO;
         case sf::Event::MouseButtonReleased:
             switch (event->mouseButton.button) {
                 case sf::Mouse::Left:
                     PlayerSet->is_active_mouse_click  = true;
                     PlayerSet->is_active_mouse_move = false;
-                    callback_mouse_click(window, map, PlayerSet);
+                    error = callback_mouse_click(window, map, PlayerSet);
+                    if (error) return error;
                     break;
                 case sf::Mouse::Right:
                     break;
@@ -57,7 +62,8 @@ int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, 
                     dy += PlayerSet->dy;
                     break;
                 case sf::Keyboard::Escape:
-                    return 1;
+                    *is_exit = 1;
+                    return ERROR_NO;
                 default:
                     break;
             }
@@ -72,18 +78,18 @@ int control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet, 
     }
     move_on_valid(map->map, PlayerSet, dx, dy);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
-    return 0;
+
+    *is_exit = 0;
+    return ERROR_NO;
 }
 
-int control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+void control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
 {
     if (PlayerSet->is_active_mouse_move)
         control_mouse_move(window, map, PlayerSet);
 
     if (PlayerSet->is_active_mouse_click)
         control_follow_path(map, PlayerSet);
-
-    return 0;
 }
 
 static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
@@ -144,8 +150,9 @@ static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
-static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+static ErrorCode callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
 {
+    ErrorCode error = ERROR_NO;
     sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
 
     int dx = (mouse_pos.x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
@@ -156,7 +163,10 @@ static void callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet
     mouse_pos.x = PlayerSet->px + mouse_pos.x;
     mouse_pos.y = PlayerSet->py + mouse_pos.y;
 
-    find_shortest_path(map, PlayerSet, &mouse_pos);
+    error = find_shortest_path(map, PlayerSet, &mouse_pos);
+    if (error) return error;
+
+    return ERROR_NO;
 }
 
 static void move_on_valid(char* map, PlayerSet_t* PlayerSet, int dx, int dy)
