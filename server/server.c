@@ -128,7 +128,7 @@ int main()
 	loop = uv_default_loop();
 
 	uv_udp_init(loop, &server);
-	uv_ip4_addr("192.168.3.10", 5002, &addr);
+	uv_ip4_addr("0.0.0.0", 5002, &addr);
 	uv_udp_bind(&server, (const struct sockaddr*)&addr, 0);
 	printf("Starting server\n");
 	uv_udp_recv_start(&server, alloc_buffer, on_recv);

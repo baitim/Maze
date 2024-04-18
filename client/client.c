@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 	
 	loop = uv_default_loop();
 	uv_udp_init(loop, &client_handle);
-	uv_ip4_addr("192.168.3.10", 5002, &addr);
+	uv_ip4_addr("89.223.71.143", 5002, &addr);
 
 	uv_udp_connect(&client_handle,  (const struct sockaddr*)&addr);
 	uv_udp_recv_start(&client_handle, alloc_buffer, on_recv);
