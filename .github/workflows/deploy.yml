@@ -29,7 +29,7 @@ jobs:
         username: ${{ secrets.USERNAME }}
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
-        script: docker build --tag maze ~/maze
+        script: docker build --tag maze ~/maze/server
 
     - name: Kill and remove old docker container
       uses: appleboy/ssh-action@master
