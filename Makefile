@@ -13,10 +13,10 @@ CFLAGS   = -O3 # -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++\
 -Wlarger-than=1310720 -Wstack-usage=1310720 -pie -fPIE -Werror=vla\
 -Itests -Isrc\
 
-LFLAGS   = -lpthread -lsfml-graphics -lsfml-window -lsfml-system
+LFLAGS   = -lm -lpthread `sdl2-config --cflags --libs` -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_ttf
 
-CPP      = g++
-LINKER   = g++
+CPP      = gcc
+LINKER   = gcc
 rm       = rm -rf
 
 IMAGEDIR = images
@@ -31,9 +31,9 @@ CMD_FLAGS = --map_txt_file $(TXTDIR)/map.txt\
 
 TARGET   = maze
 
-SOURCES  := $(wildcard $(SRCDIR)/*.cpp)
+SOURCES  := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
-OBJECTS  := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 $(TARGET): $(IMAGEDIR) $(TXTDIR) $(OBJDIR) $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
@@ -51,7 +51,7 @@ $(OBJDIR):
 	@mkdir $(OBJDIR)
 	@echo "Created obj directory!"
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CPP) $(CFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
 

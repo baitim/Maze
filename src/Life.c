@@ -25,18 +25,18 @@ typedef struct MapRoom_t_ {
     Point_t** obj_ind;
 } MapRoom_t;
 
-Object OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      false,  "images/Texture/TextureWall.png",   20,  0, {}},
-    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   5,   0, {}},
-    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      false,  "images/Texture/TextureBorder.png", 100, 0, {}},
-    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   true,   "images/Texture/TexturePlayer.png", 0,   0, {}},
-    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     true,   "images/Texture/TextureCoin.png",   10,  0, {}},
-    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     false,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL}},
-    {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     true,   "images/Texture/TexturePath.png",   0,   0, {}},
-    {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     true,   "images/Texture/TextureDest.png",   0,   0, {}},
-    {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     true,   "images/Texture/TextureImDest.png", 0,   0, {}},
-    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      true,   "images/Texture/TextureRoad.png",   5,   0, {}},
-    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      false,  "images/Texture/TextureError.png",  0,   0, {}}
+Object_t OBJECTS[COUNT_OBJECTS] = {
+    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      0,  "images/Texture/TextureWall.png",   20,  0, {}},
+    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",   5,   0, {}},
+    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      0,  "images/Texture/TextureBorder.png", 100, 0, {}},
+    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   1,  "images/Texture/TexturePlayer.png", 0,   0, {}},
+    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     1,  "images/Texture/TextureCoin.png",   10,  0, {}},
+    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     0,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL}},
+    {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     1,  "images/Texture/TexturePath.png",   0,   0, {}},
+    {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     1,  "images/Texture/TextureDest.png",   0,   0, {}},
+    {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     1,  "images/Texture/TextureImDest.png", 0,   0, {}},
+    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",   5,   0, {}},
+    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      0,  "images/Texture/TextureError.png",  0,   0, {}}
 };
 
 static ErrorCode map_create_connectivity(char* map);
@@ -60,7 +60,7 @@ static void      set_light_lamp         (Map_t* map, int pos);
 static void      map_write2file         (char* map, FILE* file);
 static void      count_free_pos         (char* map, int* count_free, int* frees_ind);
 static void      select_free_pos        (char* map, char* free_pos, int count_free, int* frees_ind, PlayerSet_t* PlayerSet);
-static int       check_neighbors        (Object* src_obj, char* map, int pos);
+static int       check_neighbors        (Object_t* src_obj, char* map, int pos);
 static int       is_obj_on_border       (int pos);
 static int       obj_can_set            (char* map, int map_ind);
 static int       is_pos_in_byte_window  (int pos);
@@ -589,7 +589,7 @@ static void select_free_pos(char* map, char* free_pos, int count_free, int* free
     }
 }
 
-static int check_neighbors(Object* src_obj, char* map, int pos)
+static int check_neighbors(Object_t* src_obj, char* map, int pos)
 {
     for (int dy = -1; dy <= 1; dy++) {
         for (int dx = -1; dx <= 1; dx++) {

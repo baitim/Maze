@@ -1,30 +1,30 @@
 #ifndef SRC_CONFIG_H
 #define SRC_CONFIG_H
 
-const int hbyte2pix = 4;
-const int wbyte2pix = 4;
-const int PIX_HEIGHT = 1000;
-const int PIX_WIDTH  = 1200;
-const int BYTE_HEIGHT = PIX_HEIGHT / hbyte2pix;
-const int BYTE_WIDTH = PIX_WIDTH  / wbyte2pix;
-const int SCREEN_BYTES_COUNT = BYTE_HEIGHT * BYTE_WIDTH;
-const int STEPS_GEN = 18;
-const double CHANCE_LIFE = 52;
-const int STAY_IN_LIFE = 4;
-const int NEW_LIFE = 5;
-const int hscale_render = 4;
-const int wscale_render = 4;
-const int delay_dx_max = 15;
-const int delay_dy_max = 15;
-const int delay_path = 12;
-const int delay_info = 50;
-const int light_dist = 20;
-const double light_force = 1.f;
-const int MAX_SIZE_INFO_STR = 100;
-const int RENDER_THREADS = 3;
-const int TUNNELS_WIDTH = 2;
-const int HILL_SLOPE = 40;
-const int MAX_HILL_HEIGHT = 5;
+#define hbyte2pix (int)4
+#define wbyte2pix (int)4
+#define PIX_HEIGHT (int)1000
+#define PIX_WIDTH  (int)1200
+#define BYTE_HEIGHT (int)(PIX_HEIGHT / hbyte2pix)
+#define BYTE_WIDTH  (int)(PIX_WIDTH  / wbyte2pix)
+#define SCREEN_BYTES_COUNT (int)(BYTE_HEIGHT * BYTE_WIDTH)
+#define STEPS_GEN (int)18
+#define CHANCE_LIFE  (double)52.f
+#define STAY_IN_LIFE (int)4
+#define NEW_LIFE (int)5
+#define hscale_render (int)4
+#define wscale_render (int)4
+#define delay_dx_max (int)15
+#define delay_dy_max (int)15
+#define delay_path_count (int)12
+#define delay_info_count (int)50
+#define light_dist (int)20
+#define light_force (double)1.f
+#define MAX_SIZE_INFO_STR (int)100
+#define RENDER_THREADS (int)3
+#define TUNNELS_WIDTH  (int)2
+#define HILL_SLOPE (int)40
+#define MAX_HILL_HEIGHT (int)5
 
 typedef struct Path_t_ {
     int path[SCREEN_BYTES_COUNT];
@@ -64,18 +64,18 @@ typedef enum CountObject2Render_ {
     COUNT_OBJ_PATH =   -2
 } CountObject2Render;
 
-const int COUNT_OBJECTS = 11;
+#define COUNT_OBJECTS 11
 
-struct Object {
+typedef struct Object_t_ {
     ObjectsSymbols symbol;
     CountObject2Render count;
-    bool can_go;
+    int can_go;
     const char* name_src_file;
     const int transparency;
     const int count_neighbors;
     ObjectsSymbols neighbors[COUNT_OBJECTS];
     unsigned char bytes_color[hbyte2pix * wbyte2pix * 4];
-};
-extern Object OBJECTS[COUNT_OBJECTS];
+} Object_t;
+extern Object_t OBJECTS[COUNT_OBJECTS];
 
 #endif // SRC_CONFIG_H

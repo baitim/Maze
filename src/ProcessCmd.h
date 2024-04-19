@@ -3,7 +3,7 @@
 
 #include "Errors.h"
 
-const int MAX_CMD_COMMAND_SIZE = 30;
+#define MAX_CMD_COMMAND_SIZE (int)30
 
 typedef struct CmdInputData_t_ {
     int is_map_txt_file;

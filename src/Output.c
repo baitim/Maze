@@ -1,5 +1,6 @@
 #include <string.h>
 #include <pthread.h>
+#include <SDL2/SDL_image.h>
 
 #include "ANSI_colors.h"
 #include "Output.h"
@@ -8,7 +9,7 @@
 #include "ProcessCmd.h"
 
 typedef struct BlockRenderInfo_t_ {
-    sf::Uint8* pixels;
+    Uint8* pixels;
     Map_t* map;
     int obj_size_x;
     int obj_size_y;
@@ -22,19 +23,22 @@ typedef struct BlockRenderInfo_t_ {
 
 void* render_block(void* line_render_info);
 
-static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
+static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
                          int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
-static void paint_path(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+static void paint_path(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
                        int chunk_x, int chunk_y);
 
-static void paint_path_target(int is_exist, sf::Uint8* pixels, int ix, int iy,
+static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
-static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
                         int chunk_x, int chunk_y, int obj_ind);
 
 static int get_obj_index (int obj_sym);
+
+static void win_print_text(char* text, SDL_Renderer** renderer, TTF_Font* font,
+                           int x, int y, int w, int h);
 
 void print_help()
 {
@@ -49,15 +53,7 @@ void print_help()
     }
 }
 
-void set_text(sf::Font* font, sf::Text* text, float x, float y)
-{
-    text->setFont(*font);
-    text->setPosition(x, y);
-    text->setCharacterSize(28);
-    text->setOutlineColor(sf::Color(252, 0, 17));
-}
-
-void render_map(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
+void render_map(Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 {
     pthread_t pool[RENDER_THREADS];
 
@@ -74,9 +70,10 @@ void render_map(sf::Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet)
 
     for (int num_thread = 0; num_thread < RENDER_THREADS; num_thread++) {
         block_render_info[num_thread] = 
-            {.pixels = pixels, .map = map, .obj_size_x = obj_size_x, .obj_size_y = obj_size_y,
-             .dx0 = dx0, .dy0 = dy0, .cx = cx, .cy = cy, .num_thread = num_thread,
-             .thread_step = thread_step};
+            (BlockRenderInfo_t) {.pixels = pixels, .map = map,
+             .obj_size_x = obj_size_x, .obj_size_y = obj_size_y,
+             .dx0 = dx0, .dy0 = dy0, .cx = cx, .cy = cy,
+             .num_thread = num_thread, .thread_step = thread_step};
 
         pthread_create(&pool[num_thread], NULL, render_block, (void*)&block_render_info[num_thread]);
     }
@@ -89,7 +86,7 @@ void* render_block(void* block_render_info)
 {
     BlockRenderInfo_t* render_data = (BlockRenderInfo_t*) block_render_info;
 
-    sf::Uint8* pixels = render_data->pixels;
+    Uint8* pixels = render_data->pixels;
     Map_t* map = render_data->map;
     int obj_size_x = render_data->obj_size_x;
     int obj_size_y = render_data->obj_size_y;
@@ -113,9 +110,9 @@ void* render_block(void* block_render_info)
 
         int dy = (dy0 + iy - PIX_HEIGHT / 2) / obj_size_y;
         int iN = cy + dy;
-        bool outside_y = false;
+        int outside_y = 0;
         if (iN != MIN(BYTE_HEIGHT - 1, MAX(0, iN)))
-            outside_y = true;
+            outside_y = 1;
 
         int chunk_x = obj_size_x;
         for (int ix = 0; ix < PIX_WIDTH; ix += obj_size_x) {
@@ -124,12 +121,12 @@ void* render_block(void* block_render_info)
 
             int dx = (dx0 + ix - PIX_WIDTH / 2) / obj_size_x;
             int iM = cx + dx;
-            bool outside_x = false;
+            int outside_x = 0;
             if (iM != MIN(BYTE_WIDTH - 1, MAX(0, iM)))
-                    outside_x = true;
+                    outside_x = 1;
 
             int pos = iN * BYTE_WIDTH + iM;
-            bool outside = outside_x || outside_y;
+            int outside = (outside_x || outside_y) ? 1 : 0;
 
             paint_object(outside, pixels, map, ix, iy, pos, obj_size_x, obj_size_y, chunk_x, chunk_y);
 
@@ -145,15 +142,15 @@ void* render_block(void* block_render_info)
     return NULL;
 }
 
-static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, int iy,
+static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
                          int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
     int obj_ind = get_obj_index(map->map[pos]);
 
     if (outside || obj_ind == SYM_OBJ_ERR) {
         for (int y = 0; y < obj_size_y; y++) {
-            sf::Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
-            memset(pixel, 0, 4 * sizeof(sf::Uint8) * (size_t)obj_size_x);
+            Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
+            memset(pixel, 0, 4 * sizeof(Uint8) * (size_t)obj_size_x);
         }
         return;
     }
@@ -171,7 +168,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
             int x_col = (int)((float)x * x_coef) * 4;
             int x_pix_window = (ix + x) * 4;
 
-            sf::Uint8* pixel = &pixels[y_pix_window + x_pix_window];
+            Uint8* pixel = &pixels[y_pix_window + x_pix_window];
             unsigned char* color = &OBJECTS[obj_ind].bytes_color[y_col + x_col];
 
             pixel[0] = MIN(255, color[0] + map->col[pos_col + 0]);
@@ -183,7 +180,7 @@ static void paint_object(bool outside, sf::Uint8* pixels, Map_t* map, int ix, in
     }
 }
 
-static void paint_path(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+static void paint_path(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
                        int chunk_x, int chunk_y)
 {
     int ind_obj_path = get_obj_index(SYM_OBJ_PATH);
@@ -191,7 +188,7 @@ static void paint_path(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int ob
     paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path);
 }
 
-static void paint_path_target(int is_exist, sf::Uint8* pixels, int ix, int iy,
+static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path_target = -1;
@@ -206,7 +203,7 @@ static void paint_path_target(int is_exist, sf::Uint8* pixels, int ix, int iy,
     paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path_target);
 }
 
-static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
+static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
                             int chunk_x, int chunk_y, int obj_ind)
 {
     float x_coef = (float)wbyte2pix / (float)obj_size_x;
@@ -221,7 +218,7 @@ static void paint_chunk(sf::Uint8* pixels, int ix, int iy, int obj_size_x, int o
             int x_col = (int)((float)x * x_coef) * 4;
             int x_pix_window = (ix + x) * 4;
 
-            sf::Uint8* pixel = &pixels[y_pix_window + x_pix_window];
+            Uint8* pixel = &pixels[y_pix_window + x_pix_window];
             unsigned char* color = &OBJECTS[obj_ind].bytes_color[y_col + x_col];
 
             if (color[0] == 255 && color[1] == 255 && color[2] == 255)
@@ -242,36 +239,40 @@ static int get_obj_index(int obj_sym)
     return -1;
 }
 
-void make_screenshot(sf::RenderWindow* window, const char* output_file)
+void make_screenshot(SDL_Renderer* renderer, const char* output_file)
 {
-    sf::Vector2u windowSize = window->getSize();
-    sf::Texture texture2;
-    texture2.create(windowSize.x, windowSize.y);
-    texture2.update(*window);
-    sf::Image image = texture2.copyToImage();
-    image.saveToFile(output_file);
+    SDL_Rect viewport;
+    SDL_Surface* surface = NULL;
+    SDL_RenderGetViewport(renderer, &viewport);
+    surface = SDL_CreateRGBSurface(0, viewport.w, viewport.h, 32, 0, 0, 0, 0);
+  
+    SDL_RenderReadPixels(renderer, NULL, surface->format->format, surface->pixels, surface->pitch);
+
+    IMG_SavePNG(surface, output_file);
+    SDL_FreeSurface(surface);
 }
 
-void print_state_info(sf::RenderWindow* window, sf::Text* POS_Text, sf::Text* FPS_Text,
-                      char* pos_string, size_t len_pos_string, char* fps_string, size_t len_fps_string,
-                      std::chrono::_V2::steady_clock::time_point clock_begin,
-                      std::chrono::_V2::steady_clock::time_point clock_end,
-                      PlayerSet_t* PlayerSet, double* old_fps)
+static void win_print_text(char* text, SDL_Renderer** renderer, TTF_Font* font,
+                           int x_, int y_, int w_, int h_)
 {
-    PlayerSet->delay_info = (PlayerSet->delay_info + 1) % delay_info;
+    SDL_Color color = {255, 0, 17, 255};
 
-    snprintf(pos_string, len_pos_string, "pos: %d  %d", PlayerSet->px, PlayerSet->py);
-    POS_Text->setString(pos_string);
-    window->draw(*POS_Text);
+    SDL_Surface* info = TTF_RenderText_Solid(font, text, color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(*renderer, info);
 
-    if (PlayerSet->delay_info == 1) {
-        auto elapsed_ms = std::chrono::duration<double,std::milli>(clock_end - clock_begin).count();
-        double fps = 100.f / elapsed_ms;
-        snprintf(fps_string, len_fps_string, "fps: %.f", fps);
-        *old_fps = fps;
-    } else {
-        snprintf(fps_string, len_fps_string, "fps: %.f", *old_fps);
-    }
-    FPS_Text->setString(fps_string);
-    window->draw(*FPS_Text);
+    SDL_Rect rect = {.x = x_, .y = y_, .w = w_, .h = h_};
+    
+    SDL_RenderCopy(*renderer, texture, NULL, &rect);
+    SDL_RenderPresent(*renderer);
+
+    SDL_FreeSurface(info);
+    SDL_DestroyTexture(texture);
+}
+
+void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string, char* fps_string,
+                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet)
+{
+    fprintf(stderr, "info\n");
+    win_print_text(pos_string, renderer, font, 10, 10, 100, 35);
+    win_print_text(fps_string, renderer, font, 10, 45, 100, 35);
 }

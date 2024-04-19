@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <time.h>
 
 #include "ANSI_colors.h"
 #include "Life.h"
@@ -17,12 +20,11 @@ int main(int argc, const char *argv[])
     ErrorCode error = ERROR_NO;
     CmdInputData_t cmd_data = {};
 
-    sf::RenderWindow window;
-    sf::Texture texture;
-    sf::Sprite sprite;
-    sf::Uint8* pixels = NULL;
-    sf::Font font;
-    sf::Text POS_Text, FPS_Text;
+    SDL_Window* window;
+    SDL_Texture* texture;
+    SDL_Renderer* renderer;
+    Uint8* pixels = NULL;
+    TTF_Font* font;
 
     Map_t map = {.path = {.path_target = -1}};
     PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.3f};
@@ -42,12 +44,11 @@ int main(int argc, const char *argv[])
     error = map_create(&map, &PlayerSet, cmd_data.map_txt_file);
     if (error) goto error;
 
-    error = window_prepare(&window, &texture, &sprite, &pixels, &font, cmd_data.font_file,
-                           &POS_Text, &FPS_Text);
+    error = window_prepare(&window, &texture, &renderer, &pixels, &font, cmd_data.font_file);
     if (error) goto error;
 
-    error = window_default_loop(&window, &texture, &sprite, pixels, &POS_Text, &FPS_Text,
-                                &map, &PlayerSet, cmd_data.screenshot_file);
+    error = window_default_loop(&window, &texture, &renderer, pixels, &font, &map, &PlayerSet,
+                                cmd_data.screenshot_file);
     if (error) goto error;
 
     goto finally;

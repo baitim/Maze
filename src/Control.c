@@ -1,67 +1,66 @@
 #include "Control.h"
 #include "FindPath.h"
 
-static void control_mouse_move  (sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
+static void control_mouse_move  (Map_t* map, PlayerSet_t* PlayerSet);
 static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet);
-static ErrorCode callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet);
+static ErrorCode callback_mouse_click(Map_t* map, PlayerSet_t* PlayerSet);
 static void move_on_valid       (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
 
-ErrorCode control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet,
-                        sf::Event* event, int* is_exit)
+ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit)
 {
     ErrorCode error = ERROR_NO;
 
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     int dx = 0, dy = 0;
     switch (event->type) {
-        case sf::Event::Closed:
+        case SDL_QUIT:
             *is_exit = 1;
             return ERROR_NO;
-        case sf::Event::MouseButtonReleased:
-            switch (event->mouseButton.button) {
-                case sf::Mouse::Left:
-                    PlayerSet->is_active_mouse_click  = true;
-                    PlayerSet->is_active_mouse_move = false;
-                    error = callback_mouse_click(window, map, PlayerSet);
+        case SDL_MOUSEBUTTONDOWN:
+            switch (event->button.button) {
+                case SDL_BUTTON_LEFT:
+                    PlayerSet->is_active_mouse_click  = 1;
+                    PlayerSet->is_active_mouse_move = 0;
+                    error = callback_mouse_click(map, PlayerSet);
                     if (error) return error;
                     break;
-                case sf::Mouse::Right:
+                case SDL_BUTTON_RIGHT:
                     break;
                 default:
                     break;
             }
             break;
-        case sf::Event::EventType::KeyPressed:
-            switch (event->key.code) {
-                case sf::Keyboard::Space:
+        case SDL_KEYDOWN:
+            switch (event->key.keysym.sym) {
+                case SDLK_SPACE:
                     PlayerSet->is_active_mouse_move  = !PlayerSet->is_active_mouse_move;
                     if (PlayerSet->is_active_mouse_move) {
                         clean_path(&map->path);
-                        PlayerSet->is_active_mouse_click = false;
+                        PlayerSet->is_active_mouse_click = 0;
                     }
                     break;
-                case sf::Keyboard::Z:
+                case SDLK_z:
                     PlayerSet->scale *= PlayerSet->Kscale;
                     break;
-                case sf::Keyboard::X:
+                case SDLK_x:
                     PlayerSet->scale /= PlayerSet->Kscale;
                     break;
-                case sf::Keyboard::F1:
+                case SDLK_F1:
                     PlayerSet->is_info = !PlayerSet->is_info;
                     break;
-                case sf::Keyboard::Left : case sf::Keyboard::A:
+                case SDLK_LEFT : case SDLK_a:
                     dx -= PlayerSet->dx;
                     break;
-                case sf::Keyboard::Right: case sf::Keyboard::D:
+                case SDLK_RIGHT: case SDLK_d:
                     dx += PlayerSet->dx;
                     break;
-                case sf::Keyboard::Up: case sf::Keyboard::W:
+                case SDLK_UP: case SDLK_w:
                     dy -= PlayerSet->dy;
                     break;
-                case sf::Keyboard::Down: case sf::Keyboard::S:
+                case SDLK_DOWN: case SDLK_s:
                     dy += PlayerSet->dy;
                     break;
-                case sf::Keyboard::Escape:
+                case SDLK_ESCAPE:
                     *is_exit = 1;
                     return ERROR_NO;
                 default:
@@ -73,8 +72,8 @@ ErrorCode control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* Playe
     }
     if (dx != 0 || dy != 0) {
         clean_path(&map->path);
-        PlayerSet->is_active_mouse_click = false;
-        PlayerSet->is_active_mouse_move = false;
+        PlayerSet->is_active_mouse_click = 0;
+        PlayerSet->is_active_mouse_move = 0;
     }
     move_on_valid(map->map, PlayerSet, dx, dy);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
@@ -83,18 +82,20 @@ ErrorCode control_event(sf::RenderWindow* window, Map_t* map, PlayerSet_t* Playe
     return ERROR_NO;
 }
 
-void control_noevent(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+void control_noevent(Map_t* map, PlayerSet_t* PlayerSet)
 {
     if (PlayerSet->is_active_mouse_move)
-        control_mouse_move(window, map, PlayerSet);
+        control_mouse_move(map, PlayerSet);
 
     if (PlayerSet->is_active_mouse_click)
         control_follow_path(map, PlayerSet);
 }
 
-static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+static void control_mouse_move(Map_t* map, PlayerSet_t* PlayerSet)
 {
-    sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     int dx = 0, dy = 0;
     
@@ -102,8 +103,8 @@ static void control_mouse_move(sf::RenderWindow* window, Map_t* map, PlayerSet_t
     PlayerSet->delay_dy = (PlayerSet->delay_dy + 1) % delay_dy_max;
     int XY_dx = PlayerSet->dx * ((PlayerSet->delay_dx == 0) ? 1 : 0);
     int XY_dy = PlayerSet->dy * ((PlayerSet->delay_dy == 0) ? 1 : 0);
-    dx = (mouse_pos.x > PIX_WIDTH  / 2) ? XY_dx : -XY_dx;
-    dy = (mouse_pos.y > PIX_HEIGHT / 2) ? XY_dy : -XY_dy;
+    dx = (mouse_x > PIX_WIDTH  / 2) ? XY_dx : -XY_dx;
+    dy = (mouse_y > PIX_HEIGHT / 2) ? XY_dy : -XY_dy;
     
     move_on_valid(map->map, PlayerSet, dx, dy);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
@@ -116,7 +117,7 @@ static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
 
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_ROAD;
     
-    PlayerSet->delay_path = (PlayerSet->delay_path + 1) % delay_path;
+    PlayerSet->delay_path = (PlayerSet->delay_path + 1) % delay_path_count;
 
     if (PlayerSet->delay_path == 1) {
         int new_x = 0;
@@ -150,20 +151,24 @@ static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
-static ErrorCode callback_mouse_click(sf::RenderWindow* window, Map_t* map, PlayerSet_t* PlayerSet)
+static ErrorCode callback_mouse_click(Map_t* map, PlayerSet_t* PlayerSet)
 {
     ErrorCode error = ERROR_NO;
-    sf::Vector2i mouse_pos = sf::Mouse::getPosition(*window);
 
-    int dx = (mouse_pos.x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
-    int dy = (mouse_pos.y < PIX_HEIGHT / 2) ? 1 - hbyte2pix : hbyte2pix - 1;
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
 
-    mouse_pos.x = (int)((float)((mouse_pos.x - PIX_WIDTH  / 2 + dx) / wbyte2pix / wscale_render) / PlayerSet->scale);
-    mouse_pos.y = (int)((float)((mouse_pos.y - PIX_HEIGHT / 2 + dy) / hbyte2pix / hscale_render) / PlayerSet->scale);
-    mouse_pos.x = PlayerSet->px + mouse_pos.x;
-    mouse_pos.y = PlayerSet->py + mouse_pos.y;
+    double dx = (mouse_x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
+    double dy = (mouse_y < PIX_HEIGHT / 2) ? 1 - hbyte2pix : hbyte2pix - 1;
 
-    error = find_shortest_path(map, PlayerSet, &mouse_pos);
+    fprintf(stderr, "scale: %f\n", PlayerSet->scale);
+
+    mouse_x = (int)((double)((double)((double)mouse_x - (double)PIX_WIDTH  / 2 + dx) / (double)wbyte2pix / (double)wscale_render) / (double)PlayerSet->scale);
+    mouse_y = (int)((double)((double)((double)mouse_y - (double)PIX_HEIGHT / 2 + dy) / (double)hbyte2pix / (double)hscale_render) / (double)PlayerSet->scale);
+    mouse_x = PlayerSet->px + mouse_x;
+    mouse_y = PlayerSet->py + mouse_y;
+
+    error = find_shortest_path(map, PlayerSet, mouse_x, mouse_y);
     if (error) return error;
 
     return ERROR_NO;
