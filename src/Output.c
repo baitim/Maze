@@ -263,16 +263,25 @@ static void win_print_text(char* text, SDL_Renderer** renderer, TTF_Font* font,
     SDL_Rect rect = {.x = x_, .y = y_, .w = w_, .h = h_};
     
     SDL_RenderCopy(*renderer, texture, NULL, &rect);
-    SDL_RenderPresent(*renderer);
 
     SDL_FreeSurface(info);
     SDL_DestroyTexture(texture);
 }
 
 void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string, char* fps_string,
-                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet)
+                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet, double* old_fps)
 {
-    fprintf(stderr, "info\n");
-    win_print_text(pos_string, renderer, font, 10, 10, 100, 35);
-    win_print_text(fps_string, renderer, font, 10, 45, 100, 35);
+    PlayerSet->delay_info = (PlayerSet->delay_info + 1) % delay_info_count;
+
+    snprintf(pos_string, MAX_SIZE_INFO_STR, "pos: %d  %d", PlayerSet->px, PlayerSet->py);
+
+    if (PlayerSet->delay_info == 1) {
+        double elapsed_ms = (double)(clock_end - clock_begin) / (double)(CLOCKS_PER_SEC / 1000);
+        double fps = 1000.f / elapsed_ms;
+        *old_fps = fps;
+    }
+    snprintf(fps_string, MAX_SIZE_INFO_STR, "fps: %.f", *old_fps);
+
+    win_print_text(pos_string, renderer, font, 10, 10, 180, 50);
+    win_print_text(fps_string, renderer, font, 10, 60, 120, 50);
 }

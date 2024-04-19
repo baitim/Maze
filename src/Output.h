@@ -13,6 +13,6 @@ void render_map     (Uint8* pixels, Map_t* map, PlayerSet_t* PlayerSet);
 void make_screenshot(SDL_Renderer* renderer, const char* output_file);
 
 void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string, char* fps_string,
-                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet);
+                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet, double* old_fps);
 
 #endif // SRC_OUTPUT_H

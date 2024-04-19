@@ -17,7 +17,7 @@
 #define delay_dx_max (int)15
 #define delay_dy_max (int)15
 #define delay_path_count (int)12
-#define delay_info_count (int)50
+#define delay_info_count (int)150
 #define light_dist (int)20
 #define light_force (double)1.f
 #define MAX_SIZE_INFO_STR (int)100

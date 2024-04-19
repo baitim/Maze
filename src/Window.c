@@ -31,7 +31,7 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
 
     SDL_RenderSetScale(*renderer, 1, 1);
 
-    *font = TTF_OpenFont(font_file, 25);
+    *font = TTF_OpenFont(font_file, 40);
 
     return ERROR_NO;
 }
@@ -47,9 +47,10 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
     char* fps_string = (char*) calloc(MAX_SIZE_INFO_STR, sizeof(char));
     if (!fps_string) return ERROR_ALLOC_FAIL;
     
+    double old_fps = 0.f;
+    clock_t clock_begin, clock_end;
     SDL_Event event = {};
     while (1) {
-        clock_t clock_begin = clock();
 
         while (SDL_PollEvent(&event)) {
             int is_exit = 0;
@@ -69,9 +70,11 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
         SDL_UnlockTexture(*texture);
         SDL_RenderCopy(*renderer, *texture, NULL, NULL);
 
-        clock_t clock_end = clock();
+        clock_end = clock();
         if (PlayerSet->is_info) 
-            print_state_info(renderer, *font, pos_string, fps_string, clock_begin, clock_end, PlayerSet);
+            print_state_info(renderer, *font, pos_string, fps_string, clock_begin, clock_end,
+                             PlayerSet, &old_fps);
+        clock_begin = clock();
 
         SDL_RenderPresent(*renderer);
     }
