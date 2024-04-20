@@ -61,6 +61,7 @@
 * Optimized by pthreads
 * Connectivity is guaranteed
 * Height difference by shadows
+* Musical accompaniment
 
 <p align="center"><img src="https://github.com/baitim/Maze/blob/main/images/rabbit.gif" width="40%"></p>
 
