@@ -7,10 +7,11 @@
 static void lock_texture(SDL_Texture** texture, Uint8** pixels);
 
 static void free_window_stuff(SDL_Window** window, SDL_Renderer** renderer, SDL_Texture** texture,
-                              TTF_Font** font, Uint8* pixels, char* pos_string, char* fps_string);
+                              TTF_Font** font, Mix_Music** music, Uint8* pixels, char* pos_string,
+                              char* fps_string);
 
 ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                         Uint8** pixels, TTF_Font** font, char* font_file)
+                         Mix_Music** music, Uint8** pixels, TTF_Font** font, CmdInputData_t* cmd_data)
 {
     SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
@@ -24,6 +25,9 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
     SDL_RenderClear(*renderer);
     SDL_RenderPresent(*renderer);
 
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+    *music = Mix_LoadMUS("music/beat.wav");
+
     *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
                                  PIX_WIDTH, PIX_HEIGHT);
 
@@ -32,15 +36,17 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
 
     SDL_RenderSetScale(*renderer, 1, 1);
 
-    *font = TTF_OpenFont(font_file, 40);
+    *font = TTF_OpenFont(cmd_data->font_file, 40);
 
     return ERROR_NO;
 }
 
 ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                              Uint8* pixels, TTF_Font** font, Map_t* map, PlayerSet_t* PlayerSet,
-                              char* screenshot_file)
+                              Mix_Music** music, Uint8* pixels, TTF_Font** font, Map_t* map,
+                              PlayerSet_t* PlayerSet, char* screenshot_file)
 {
+     Mix_PlayMusic(*music, -1);
+
     ErrorCode error = ERROR_NO;
     char* pos_string = (char*) calloc(MAX_SIZE_INFO_STR, sizeof(char));
     if (!pos_string) return ERROR_ALLOC_FAIL;
@@ -60,7 +66,8 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
 
             if (is_exit) {
                 make_screenshot(*renderer, screenshot_file);
-                free_window_stuff(window, renderer, texture, font, pixels, pos_string, fps_string);
+                free_window_stuff(window, renderer, texture, font, music, pixels,
+                                  pos_string, fps_string);
                 return ERROR_NO;
             }
         }
@@ -80,7 +87,7 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
         SDL_RenderPresent(*renderer);
     }
 
-    free_window_stuff(window, renderer, texture, font, pixels, pos_string, fps_string);
+    free_window_stuff(window, renderer, texture, font, music, pixels, pos_string, fps_string);
     return ERROR_NO;
 }
 
@@ -95,13 +102,16 @@ static void lock_texture(SDL_Texture** texture, Uint8** pixels)
 }
 
 static void free_window_stuff(SDL_Window** window, SDL_Renderer** renderer, SDL_Texture** texture,
-                              TTF_Font** font, Uint8* pixels, char* pos_string, char* fps_string)
+                              TTF_Font** font, Mix_Music** music, Uint8* pixels, char* pos_string,
+                              char* fps_string)
 {
     SDL_DestroyWindow(*window);
     SDL_DestroyRenderer(*renderer);
     SDL_DestroyTexture(*texture);
     TTF_CloseFont(*font);
+    Mix_FreeMusic(*music);
 
+    Mix_Quit();
     TTF_Quit();
     SDL_Quit();
     

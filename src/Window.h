@@ -3,16 +3,18 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 #include "Config.h"
 #include "Control.h"
 #include "Errors.h"
+#include "ProcessCmd.h"
 
 ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                         Uint8** pixels, TTF_Font** font, char* font_file);
+                         Mix_Music** music, Uint8** pixels, TTF_Font** font, CmdInputData_t* cmd_data);
 
 ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                              Uint8* pixels, TTF_Font** font, Map_t* map, PlayerSet_t* PlayerSet,
-                              char* screenshot_file);
+                              Mix_Music** music, Uint8* pixels, TTF_Font** font, Map_t* map,
+                              PlayerSet_t* PlayerSet, char* screenshot_file);
 
 #endif // SRC_WINDOW_H

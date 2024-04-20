@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <time.h>
 
 #include "ANSI_colors.h"
@@ -23,6 +24,7 @@ int main(int argc, const char *argv[])
     SDL_Window* window;
     SDL_Texture* texture;
     SDL_Renderer* renderer;
+    Mix_Music* music = NULL;
     Uint8* pixels = NULL;
     TTF_Font* font;
 
@@ -44,10 +46,10 @@ int main(int argc, const char *argv[])
     error = map_create(&map, &PlayerSet, cmd_data.map_txt_file);
     if (error) goto error;
 
-    error = window_prepare(&window, &texture, &renderer, &pixels, &font, cmd_data.font_file);
+    error = window_prepare(&window, &texture, &renderer, &music, &pixels, &font, &cmd_data);
     if (error) goto error;
 
-    error = window_default_loop(&window, &texture, &renderer, pixels, &font, &map, &PlayerSet,
+    error = window_default_loop(&window, &texture, &renderer, &music, pixels, &font, &map, &PlayerSet,
                                 cmd_data.screenshot_file);
     if (error) goto error;
 
