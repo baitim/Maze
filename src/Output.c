@@ -27,13 +27,13 @@ static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
                          int pos, int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
 static void paint_path(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
-                       int chunk_x, int chunk_y);
+                       int chunk_x, int chunk_y, Uint8* light, int pos);
 
-static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy,
+static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy, Uint8* light, int pos,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y);
 
 static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
-                        int chunk_x, int chunk_y, int obj_ind);
+                        int chunk_x, int chunk_y, int obj_ind, Uint8* light, int pos);
 
 static int get_obj_index (int obj_sym);
 
@@ -132,11 +132,12 @@ void* render_block(void* block_render_info)
 
             if (!outside && map->path.path[pos] > 0 && map->path.path_target != pos &&
                 map->path.passed < map->path.path[pos])
-                paint_path(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
+                paint_path(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, map->light, pos);
 
             if (!outside && map->path.path_target == pos &&
                 ((map->path.passed < map->path.count && map->path.path_exist) || !map->path.path_exist))
-                paint_path_target(map->path.path_exist, pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y);
+                paint_path_target(map->path.path_exist, pixels, ix, iy, map->light, pos,
+                                  obj_size_x, obj_size_y, chunk_x, chunk_y);
         }
     }
     return NULL;
@@ -171,24 +172,24 @@ static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
             Uint8* pixel = &pixels[y_pix_window + x_pix_window];
             unsigned char* color = &OBJECTS[obj_ind].bytes_color[y_col + x_col];
 
-            pixel[0] = MIN(255, color[0] + map->col[pos_col + 0]);
-            pixel[1] = MIN(255, color[1] + map->col[pos_col + 1]);
-            pixel[2] = MIN(255, color[2] + map->col[pos_col + 2]);
+            float light_norm = (float)map->light[pos] / 255.f;
 
-            pixel[3] = map->light[pos];
+            pixel[0] = (Uint8)((float)(MIN(255, color[0] + map->col[pos_col + 0])) * light_norm);
+            pixel[1] = (Uint8)((float)(MIN(255, color[1] + map->col[pos_col + 1])) * light_norm);
+            pixel[2] = (Uint8)((float)(MIN(255, color[2] + map->col[pos_col + 2])) * light_norm);
         }
     }
 }
 
 static void paint_path(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
-                       int chunk_x, int chunk_y)
+                       int chunk_x, int chunk_y, Uint8* light, int pos)
 {
     int ind_obj_path = get_obj_index(SYM_OBJ_PATH);
 
-    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path);
+    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path, light, pos);
 }
 
-static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy,
+static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy, Uint8* light, int pos,
                               int obj_size_x, int obj_size_y, int chunk_x, int chunk_y)
 {
     int ind_obj_path_target = -1;
@@ -200,11 +201,12 @@ static void paint_path_target(int is_exist, Uint8* pixels, int ix, int iy,
         }
     }
 
-    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y, ind_obj_path_target);
+    paint_chunk(pixels, ix, iy, obj_size_x, obj_size_y, chunk_x, chunk_y,
+                ind_obj_path_target, light, pos);
 }
 
 static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_size_y,
-                            int chunk_x, int chunk_y, int obj_ind)
+                            int chunk_x, int chunk_y, int obj_ind, Uint8* light, int pos)
 {
     float x_coef = (float)wbyte2pix / (float)obj_size_x;
     float y_coef = (float)hbyte2pix / (float)obj_size_y;
@@ -223,10 +225,12 @@ static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_s
 
             if (color[0] == 255 && color[1] == 255 && color[2] == 255)
                 continue;
-    
-            pixel[0] = MIN(255, color[0] + pixel[0]);
-            pixel[1] = MIN(255, color[1] + pixel[1]);
-            pixel[2] = MIN(255, color[2] + pixel[2]);
+
+            float light_norm = (float)light[pos] / 255.f;
+                   
+            pixel[0] = (Uint8)((float)(MIN(255, color[0] + pixel[0])) * light_norm);
+            pixel[1] = (Uint8)((float)(MIN(255, color[1] + pixel[1])) * light_norm);
+            pixel[2] = (Uint8)((float)(MIN(255, color[2] + pixel[2])) * light_norm);
         }
     }
 }
@@ -283,5 +287,5 @@ void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string,
     snprintf(fps_string, MAX_SIZE_INFO_STR, "fps: %.f", *old_fps);
 
     win_print_text(pos_string, renderer, font, 10, 10, 180, 50);
-    win_print_text(fps_string, renderer, font, 10, 60, 120, 50);
+    win_print_text(fps_string, renderer, font, 10, 60, 130, 50);
 }

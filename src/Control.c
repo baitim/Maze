@@ -161,8 +161,6 @@ static ErrorCode callback_mouse_click(Map_t* map, PlayerSet_t* PlayerSet)
     double dx = (mouse_x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
     double dy = (mouse_y < PIX_HEIGHT / 2) ? 1 - hbyte2pix : hbyte2pix - 1;
 
-    fprintf(stderr, "scale: %f\n", PlayerSet->scale);
-
     mouse_x = (int)((double)((double)((double)mouse_x - (double)PIX_WIDTH  / 2 + dx) / (double)wbyte2pix / (double)wscale_render) / (double)PlayerSet->scale);
     mouse_y = (int)((double)((double)((double)mouse_y - (double)PIX_HEIGHT / 2 + dy) / (double)hbyte2pix / (double)hscale_render) / (double)PlayerSet->scale);
     mouse_x = PlayerSet->px + mouse_x;

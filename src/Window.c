@@ -19,11 +19,12 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
                                PIX_WIDTH, PIX_HEIGHT, SDL_WINDOW_SHOWN);
 
     *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_ACCELERATED);
-    SDL_SetRenderDrawColor (*renderer, 0, 0, 0, 0);
+    SDL_SetRenderDrawColor(*renderer, 0, 0, 0, 255);
+    SDL_SetTextureBlendMode(*texture, SDL_BLENDMODE_ADD);
     SDL_RenderClear(*renderer);
     SDL_RenderPresent(*renderer);
 
-    *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+    *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
                                  PIX_WIDTH, PIX_HEIGHT);
 
     *pixels = (Uint8*) calloc(sizeof(Uint8), PIX_WIDTH * PIX_HEIGHT * 4);
@@ -100,6 +101,9 @@ static void free_window_stuff(SDL_Window** window, SDL_Renderer** renderer, SDL_
     SDL_DestroyRenderer(*renderer);
     SDL_DestroyTexture(*texture);
     TTF_CloseFont(*font);
+
+    TTF_Quit();
+    SDL_Quit();
     
     free(pixels);
     free(pos_string);
