@@ -14,9 +14,9 @@
 #define NEW_LIFE (int)5
 #define hscale_render (int)4
 #define wscale_render (int)4
-#define delay_dx_max (int)3
-#define delay_dy_max (int)3
-#define delay_path_count (int)8
+#define delay_dx_max (int)12
+#define delay_dy_max (int)12
+#define delay_path_count (int)9
 #define delay_info_count (int)150
 #define light_dist (int)20
 #define light_force (double)1.f

@@ -53,6 +53,9 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
 
     char* fps_string = (char*) calloc(MAX_SIZE_INFO_STR, sizeof(char));
     if (!fps_string) return ERROR_ALLOC_FAIL;
+
+    char* count_coins_string = (char*) calloc(MAX_SIZE_INFO_STR, sizeof(char));
+    if (!fps_string) return ERROR_ALLOC_FAIL;
     
     double old_fps = 0.f;
     clock_t clock_begin, clock_end;
@@ -80,8 +83,8 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
 
         clock_end = clock();
         if (PlayerSet->is_info) 
-            print_state_info(renderer, *font, pos_string, fps_string, clock_begin, clock_end,
-                             PlayerSet, &old_fps);
+            print_state_info(renderer, *font, pos_string, fps_string, count_coins_string,
+                             clock_begin, clock_end, PlayerSet, &old_fps);
         clock_begin = clock();
 
         SDL_RenderPresent(*renderer);

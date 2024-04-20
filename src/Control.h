@@ -16,6 +16,7 @@ typedef struct PlayerSet_t_ {
     int delay_path;
     int delay_info;
     float scale, Kscale;
+    int count_coins;
 } PlayerSet_t;
 
 ErrorCode control_event  (Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit);

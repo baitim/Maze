@@ -1,5 +1,6 @@
 #include "Control.h"
 #include "FindPath.h"
+#include "ProcessObject.h"
 
 static void control_mouse_move  (Map_t* map, PlayerSet_t* PlayerSet);
 static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet);
@@ -76,6 +77,8 @@ ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, in
         PlayerSet->is_active_mouse_move = 0;
     }
     move_on_valid(map->map, PlayerSet, dx, dy);
+
+    process_object(map, PlayerSet);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 
     *is_exit = 0;
@@ -107,6 +110,8 @@ static void control_mouse_move(Map_t* map, PlayerSet_t* PlayerSet)
     dy = (mouse_y > PIX_HEIGHT / 2) ? XY_dy : -XY_dy;
     
     move_on_valid(map->map, PlayerSet, dx, dy);
+
+    process_object(map, PlayerSet);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
@@ -147,6 +152,8 @@ static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
         PlayerSet->delay_path = 0;
         clean_path(&map->path);
     }
+
+    process_object(map, PlayerSet);
 
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }

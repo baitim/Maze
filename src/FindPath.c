@@ -80,6 +80,9 @@ ErrorCode find_shortest_path(Map_t* map, PlayerSet_t* PlayerSet, int mouse_x, in
 
     clean_path(&map->path);
 
+    if (PlayerSet->px == mouse_x && PlayerSet->py == mouse_y)
+        return ERROR_NO;
+
     map->path.path_target = BYTE_WIDTH * mouse_y + mouse_x;
     
     if (!passable_object(map->map, mouse_x, mouse_y))

@@ -273,7 +273,8 @@ static void win_print_text(char* text, SDL_Renderer** renderer, TTF_Font* font,
 }
 
 void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string, char* fps_string,
-                      clock_t clock_begin, clock_t clock_end, PlayerSet_t* PlayerSet, double* old_fps)
+                      char* count_coins_string, clock_t clock_begin, clock_t clock_end,
+                      PlayerSet_t* PlayerSet, double* old_fps)
 {
     PlayerSet->delay_info = (PlayerSet->delay_info + 1) % delay_info_count;
 
@@ -286,6 +287,9 @@ void print_state_info(SDL_Renderer** renderer, TTF_Font* font, char* pos_string,
     }
     snprintf(fps_string, MAX_SIZE_INFO_STR, "fps: %.f", *old_fps);
 
+    snprintf(count_coins_string, MAX_SIZE_INFO_STR, "coins: %d", PlayerSet->count_coins);
+
     win_print_text(pos_string, renderer, font, 10, 10, 180, 50);
-    win_print_text(fps_string, renderer, font, 10, 60, 130, 50);
+    win_print_text(fps_string, renderer, font, 10, 65, 125, 45);
+    win_print_text(count_coins_string, renderer, font, 10, 110, 150, 40);
 }
