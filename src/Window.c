@@ -25,7 +25,7 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
     SDL_RenderClear(*renderer);
     SDL_RenderPresent(*renderer);
 
-    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+    Mix_OpenAudio(AUDIO_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
     *music = Mix_LoadMUS("music/beat.wav");
 
     *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
@@ -61,10 +61,9 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
     clock_t clock_begin, clock_end;
     SDL_Event event = {};
     while (1) {
-
         while (SDL_PollEvent(&event)) {
             int is_exit = 0;
-            error = control_event(map, PlayerSet, &event, &is_exit);
+            error = control_event(map, PlayerSet, &event, &is_exit, renderer);
             if (error) return error;
 
             if (is_exit) {
@@ -74,7 +73,7 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
                 return ERROR_NO;
             }
         }
-        control_noevent(map, PlayerSet);
+        control_noevent(map, PlayerSet, renderer);
 
         lock_texture(texture, &pixels);
         render_map(pixels, map, PlayerSet);

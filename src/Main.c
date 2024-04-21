@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
 
     error = objects_get();
     if (error) goto error;
-    
+
     error = map_create(&map, &PlayerSet, cmd_data.map_txt_file);
     if (error) goto error;
 

@@ -2,12 +2,12 @@
 #include "FindPath.h"
 #include "ProcessObject.h"
 
-static void control_mouse_move  (Map_t* map, PlayerSet_t* PlayerSet);
-static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet);
+static void control_mouse_move  (Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer);
+static void control_follow_path (Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer);
 static ErrorCode callback_mouse_click(Map_t* map, PlayerSet_t* PlayerSet);
 static void move_on_valid       (char* map, PlayerSet_t* PlayerSet, int dx, int dy);
 
-ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit)
+ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit, SDL_Renderer** renderer)
 {
     ErrorCode error = ERROR_NO;
 
@@ -78,23 +78,23 @@ ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, in
     }
     move_on_valid(map->map, PlayerSet, dx, dy);
 
-    process_object(map, PlayerSet);
+    process_object(renderer, map, PlayerSet);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 
     *is_exit = 0;
     return ERROR_NO;
 }
 
-void control_noevent(Map_t* map, PlayerSet_t* PlayerSet)
+void control_noevent(Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer)
 {
     if (PlayerSet->is_active_mouse_move)
-        control_mouse_move(map, PlayerSet);
+        control_mouse_move(map, PlayerSet, renderer);
 
     if (PlayerSet->is_active_mouse_click)
-        control_follow_path(map, PlayerSet);
+        control_follow_path(map, PlayerSet, renderer);
 }
 
-static void control_mouse_move(Map_t* map, PlayerSet_t* PlayerSet)
+static void control_mouse_move(Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer)
 {
     int mouse_x, mouse_y;
     SDL_GetMouseState(&mouse_x, &mouse_y);
@@ -111,11 +111,11 @@ static void control_mouse_move(Map_t* map, PlayerSet_t* PlayerSet)
     
     move_on_valid(map->map, PlayerSet, dx, dy);
 
-    process_object(map, PlayerSet);
+    process_object(renderer, map, PlayerSet);
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }
 
-static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
+static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer)
 {
     if (!map->path.path_exist && map->path.passed == map->path.count)
         return;
@@ -153,7 +153,7 @@ static void control_follow_path(Map_t* map, PlayerSet_t* PlayerSet)
         clean_path(&map->path);
     }
 
-    process_object(map, PlayerSet);
+    process_object(renderer, map, PlayerSet);
 
     map->map[PlayerSet->py * BYTE_WIDTH + PlayerSet->px] = SYM_OBJ_PLAYER;
 }

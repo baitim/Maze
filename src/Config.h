@@ -25,6 +25,7 @@
 #define TUNNELS_WIDTH  (int)2
 #define HILL_SLOPE (int)40
 #define MAX_HILL_HEIGHT (int)5
+#define AUDIO_FREQUENCY 44100
 
 typedef struct Path_t_ {
     int path[SCREEN_BYTES_COUNT];
@@ -53,7 +54,8 @@ typedef enum ObjectsSymbols_ {
     SYM_OBJ_DEST    = 'V',
     SYM_OBJ_IMDEST  = 'X',
     SYM_OBJ_TUNNEL  = 'T',
-    SYM_OBJ_ERR     = '!'
+    SYM_OBJ_ERR     = '!',
+    SYM_OBJ_SCREAM  = 'S'
 } ObjectsSymbols;
 
 typedef enum CountObject2Render_ {
@@ -61,10 +63,11 @@ typedef enum CountObject2Render_ {
     COUNT_OBJ_PLAYER =  1,
     COUNT_OBJ_COIN =   50,
     COUNT_OBJ_LAMP =   80,
-    COUNT_OBJ_PATH =   -2
+    COUNT_OBJ_PATH =   -2,
+    COUNT_OBJ_SCREAM = 25
 } CountObject2Render;
 
-#define COUNT_OBJECTS 11
+#define COUNT_OBJECTS 12
 
 typedef struct Object_t_ {
     ObjectsSymbols symbol;

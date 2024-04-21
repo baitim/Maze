@@ -5,6 +5,6 @@
 #include "Control.h"
 #include "Errors.h"
 
-void process_object(Map_t* map, PlayerSet_t* PlayerSet);
+void process_object(SDL_Renderer** renderer, Map_t* map, PlayerSet_t* PlayerSet);
 
 #endif // PROCESS_OBJECT_H

@@ -19,8 +19,8 @@ typedef struct PlayerSet_t_ {
     int count_coins;
 } PlayerSet_t;
 
-ErrorCode control_event  (Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit);
-void      control_noevent(Map_t* map, PlayerSet_t* PlayerSet);
+ErrorCode control_event  (Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, int* is_exit, SDL_Renderer** renderer);
+void      control_noevent(Map_t* map, PlayerSet_t* PlayerSet, SDL_Renderer** renderer);
 int       passable_object(char* map, int x, int y);
 
 #endif // SRC_CONTROL_H

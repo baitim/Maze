@@ -26,17 +26,18 @@ typedef struct MapRoom_t_ {
 } MapRoom_t;
 
 Object_t OBJECTS[COUNT_OBJECTS] = {
-    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      0,  "images/Texture/TextureWall.png",   20,  0, {}},
-    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",   5,   0, {}},
-    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      0,  "images/Texture/TextureBorder.png", 100, 0, {}},
-    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   1,  "images/Texture/TexturePlayer.png", 0,   0, {}},
-    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     1,  "images/Texture/TextureCoin.png",   10,  0, {}},
-    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     0,  "images/Texture/TextureLamp.png",   0,   2, {SYM_OBJ_WALL}},
-    {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     1,  "images/Texture/TexturePath.png",   0,   0, {}},
-    {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     1,  "images/Texture/TextureDest.png",   0,   0, {}},
-    {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     1,  "images/Texture/TextureImDest.png", 0,   0, {}},
-    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",   5,   0, {}},
-    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      0,  "images/Texture/TextureError.png",  0,   0, {}}
+    {SYM_OBJ_WALL,      COUNT_OBJ_INF,      0,  "images/Texture/TextureWall.png",     20,  0, {}},
+    {SYM_OBJ_ROAD,      COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",     5,   0, {}},
+    {SYM_OBJ_BORDER,    COUNT_OBJ_INF,      0,  "images/Texture/TextureBorder.png",   100, 0, {}},
+    {SYM_OBJ_PLAYER,    COUNT_OBJ_PLAYER,   1,  "images/Texture/TexturePlayer.png",   0,   0, {}},
+    {SYM_OBJ_COIN,      COUNT_OBJ_COIN,     1,  "images/Texture/TextureCoin.png",     10,  0, {}},
+    {SYM_OBJ_LAMP,      COUNT_OBJ_LAMP,     0,  "images/Texture/TextureLamp.png",     0,   2, {SYM_OBJ_WALL}},
+    {SYM_OBJ_PATH,      COUNT_OBJ_PATH,     1,  "images/Texture/TexturePath.png",     0,   0, {}},
+    {SYM_OBJ_DEST,      COUNT_OBJ_PATH,     1,  "images/Texture/TextureDest.png",     0,   0, {}},
+    {SYM_OBJ_IMDEST,    COUNT_OBJ_PATH,     1,  "images/Texture/TextureImDest.png",   0,   0, {}},
+    {SYM_OBJ_TUNNEL,    COUNT_OBJ_INF,      1,  "images/Texture/TextureRoad.png",     5,   0, {}},
+    {SYM_OBJ_ERR,       COUNT_OBJ_INF,      0,  "images/Texture/TextureError.png",    0,   0, {}},
+    {SYM_OBJ_SCREAM,    COUNT_OBJ_SCREAM,   1,  "images/Texture/TextureScreamer.png", 0,   0, {}}
 };
 
 static ErrorCode map_create_connectivity(char* map);
