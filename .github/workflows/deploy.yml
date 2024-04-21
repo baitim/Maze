@@ -2,7 +2,7 @@ name: Deploy
 on:
   push:
     branches:
-    - server-&-client
+    - merge-main-&-server
 
 jobs:
   build:

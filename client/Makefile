@@ -1,6 +1,6 @@
 CFLAGS   = -O3
 
-LFLAGS   = -l uv
+LFLAGS   = -l uv `sdl2-config --cflags --libs` -lSDL2
 
 CPP      = gcc
 LINKER   = gcc
@@ -11,7 +11,7 @@ OBJDIR   = obj
 
 CMD_FLAGS = 
 
-TARGET   = server
+TARGET   = client
 
 SOURCES  := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)

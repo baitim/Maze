@@ -135,7 +135,7 @@ int main()
 	
 	uv_timer_init(loop, &timer);
 	printf("Starting timer\n");
-	uv_timer_start(&timer, on_timer, 25, 25);
+	uv_timer_start(&timer, on_timer, 1000, 1000);
 
 	int result = uv_run(loop, UV_RUN_DEFAULT);
 	return result;
