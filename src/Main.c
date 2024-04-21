@@ -21,12 +21,12 @@ int main(int argc, const char *argv[])
     ErrorCode error = ERROR_NO;
     CmdInputData_t cmd_data = {};
 
-    SDL_Window* window;
-    SDL_Texture* texture;
-    SDL_Renderer* renderer;
-    Mix_Music* music = NULL;
-    Uint8* pixels = NULL;
-    TTF_Font* font;
+    SDL_Window* window      = NULL;
+    SDL_Texture* texture    = NULL;
+    SDL_Renderer* renderer  = NULL;
+    Mix_Music* music        = NULL;
+    Uint8* pixels           = NULL;
+    TTF_Font* font          = NULL;
 
     Map_t map = {.path = {.path_target = -1}};
     PlayerSet_t PlayerSet = {.is_info = 1, .dx = 1, .dy = 1, .scale = 1.f, .Kscale = 1.3f};

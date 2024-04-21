@@ -25,11 +25,12 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
     SDL_RenderClear(*renderer);
     SDL_RenderPresent(*renderer);
 
-    Mix_OpenAudio(AUDIO_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
-    *music = Mix_LoadMUS("music/beat.wav");
-
     *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
                                  PIX_WIDTH, PIX_HEIGHT);
+
+
+    Mix_OpenAudio(AUDIO_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
+    *music = Mix_LoadMUS("music/beat.wav");
 
     *pixels = (Uint8*) calloc(sizeof(Uint8), PIX_WIDTH * PIX_HEIGHT * 4);
     if (!(*pixels)) return ERROR_ALLOC_FAIL;
@@ -58,7 +59,7 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
     if (!fps_string) return ERROR_ALLOC_FAIL;
     
     double old_fps = 0.f;
-    clock_t clock_begin, clock_end;
+    clock_t clock_begin = 0, clock_end = 0;
     SDL_Event event = {};
     while (1) {
         while (SDL_PollEvent(&event)) {

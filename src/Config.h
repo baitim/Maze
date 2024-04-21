@@ -61,10 +61,10 @@ typedef enum ObjectsSymbols_ {
 typedef enum CountObject2Render_ {
     COUNT_OBJ_INF =    -1,
     COUNT_OBJ_PLAYER =  1,
-    COUNT_OBJ_COIN =   50,
-    COUNT_OBJ_LAMP =   80,
+    COUNT_OBJ_COIN =   70,
+    COUNT_OBJ_LAMP =   85,
     COUNT_OBJ_PATH =   -2,
-    COUNT_OBJ_SCREAM = 25
+    COUNT_OBJ_SCREAM = 40
 } CountObject2Render;
 
 #define COUNT_OBJECTS 12

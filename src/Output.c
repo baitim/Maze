@@ -106,7 +106,7 @@ void* render_block(void* block_render_info)
     int chunk_y  = obj_size_y;
     for (int iy = start_iy; iy < end_iy; iy += obj_size_y) {
         if (iy + obj_size_y >= PIX_HEIGHT)
-            chunk_y = PIX_HEIGHT - iy;
+            chunk_y = PIX_HEIGHT - iy - 1;
 
         int dy = (dy0 + iy - PIX_HEIGHT / 2) / obj_size_y;
         int iN = cy + dy;
@@ -150,9 +150,9 @@ static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
     int obj_ind = get_obj_index(map->map[pos]);
 
     if (outside || obj_ind == SYM_OBJ_ERR) {
-        for (int y = 0; y < obj_size_y; y++) {
+        for (int y = 0; y < chunk_y; y++) {
             Uint8* pixel = &pixels[pos_in_pix_window(ix, iy + y)];
-            memset(pixel, 0, 4 * sizeof(Uint8) * (size_t)obj_size_x);
+            memset(pixel, 0, 4 * sizeof(Uint8) * (size_t)chunk_x);
         }
         return;
     }
