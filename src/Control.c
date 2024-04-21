@@ -21,7 +21,7 @@ ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, in
             switch (event->button.button) {
                 case SDL_BUTTON_LEFT:
                     PlayerSet->is_active_mouse_click  = 1;
-                    PlayerSet->is_active_mouse_move = 0;
+                    PlayerSet->is_active_mouse_move  = 0;
                     error = callback_mouse_click(map, PlayerSet);
                     if (error) return error;
                     break;
@@ -30,7 +30,7 @@ ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, in
                 default:
                     break;
             }
-            break;
+            return ERROR_NO;
         case SDL_KEYDOWN:
             switch (event->key.keysym.sym) {
                 case SDLK_SPACE:
@@ -39,16 +39,16 @@ ErrorCode control_event(Map_t* map, PlayerSet_t* PlayerSet, SDL_Event* event, in
                         clean_path(&map->path);
                         PlayerSet->is_active_mouse_click = 0;
                     }
-                    break;
+                    return ERROR_NO;
                 case SDLK_z:
                     PlayerSet->scale *= PlayerSet->Kscale;
-                    break;
+                    return ERROR_NO;
                 case SDLK_x:
                     PlayerSet->scale /= PlayerSet->Kscale;
-                    break;
+                    return ERROR_NO;
                 case SDLK_F1:
                     PlayerSet->is_info = !PlayerSet->is_info;
-                    break;
+                    return ERROR_NO;
                 case SDLK_LEFT : case SDLK_a:
                     dx -= PlayerSet->dx;
                     break;
@@ -191,7 +191,7 @@ static void move_on_valid(char* map, PlayerSet_t* PlayerSet, int dx, int dy)
 int passable_object(char* map, int x, int y)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        if (map[y * BYTE_WIDTH + x] == OBJECTS[i].symbol && OBJECTS[i].can_go)
+        if (map[y * BYTE_WIDTH + x] == (char)OBJECTS[i].symbol && OBJECTS[i].can_go)
             return 1;
     }
     return 0;

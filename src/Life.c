@@ -381,7 +381,7 @@ static ErrorCode make_hills(Map_t* map)
             error = get_height(map->map, pos, &height);
             if (error) return error;
 
-            map->shadow[pos] = (MAX_HILL_HEIGHT - MIN(MAX_HILL_HEIGHT, height)) * HILL_SLOPE;
+            map->shadow[pos] = (Uint8)MIN(255, MAX(0, ((MAX_HILL_HEIGHT - MIN(MAX_HILL_HEIGHT, height)) * HILL_SLOPE)));
         }
     }
     return ERROR_NO;
@@ -478,7 +478,7 @@ static void set_light_lamp(Map_t* map, int pos)
                 continue;
 
             float dist = sqrtf((float)(dx * dx + dy * dy));
-            unsigned char ratio = 255 * (float)(1.f - MIN(1.f, dist / (float)light_dist / light_force));
+            unsigned char ratio = (unsigned char)(255 * (float)(1.f - MIN(1.f, dist / (float)light_dist / light_force)));
             unsigned char ratio_norm = MAX(0, MIN(255, ratio));
 
             unsigned char was_light = map->light[dpos];
@@ -486,8 +486,8 @@ static void set_light_lamp(Map_t* map, int pos)
 
             unsigned char was_red   = map->col[dpos * 3 + 0];
             unsigned char was_green = map->col[dpos * 3 + 1];
-            map->col[dpos * 3 + 0] = MIN(255, was_red   + ratio_norm / 7);
-            map->col[dpos * 3 + 1] = MIN(255, was_green + ratio_norm / 7);
+            map->col[dpos * 3 + 0] = (unsigned char)MIN(255, was_red   + ratio_norm / 7);
+            map->col[dpos * 3 + 1] = (unsigned char)MIN(255, was_green + ratio_norm / 7);
         }
     }
 }
@@ -556,7 +556,7 @@ static void count_free_pos(char* map, int* count_free, int* frees_ind)
 {
     for (int pos = 0; pos < SCREEN_BYTES_COUNT; pos++) {
         for (int k = 0; k < COUNT_OBJECTS; k++) {
-            if (map[pos] == OBJECTS[k].symbol && OBJECTS[k].can_go) {
+            if (map[pos] == (char)OBJECTS[k].symbol && OBJECTS[k].can_go) {
                 frees_ind[*count_free] = pos;
                 (*count_free)++;
                 break;
@@ -618,7 +618,7 @@ static int check_neighbors(Object_t* src_obj, char* map, int pos)
             if (abs(dx) + abs(dy) == 1) {
                 for (int i = 0; i < src_obj->count_neighbors; i++) {
                     for (int j = 0; j < COUNT_OBJECTS; j++) {
-                        if (OBJECTS[j].symbol == map[pos + dy * BYTE_WIDTH + dx] &&
+                        if ((char)OBJECTS[j].symbol == map[pos + dy * BYTE_WIDTH + dx] &&
                             OBJECTS[j].symbol == src_obj->neighbors[i])
                             return 1;
                     }
@@ -649,7 +649,7 @@ static int is_obj_on_border(int pos)
 static int obj_can_set(char* map, int map_ind)
 {
     for (int k = 0; k < COUNT_OBJECTS; k++)
-        if (map[map_ind] == OBJECTS[k].symbol && !OBJECTS[k].can_go)
+        if (map[map_ind] == (char)OBJECTS[k].symbol && !OBJECTS[k].can_go)
             return 0;
     return 1;
 }

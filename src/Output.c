@@ -140,6 +140,7 @@ void* render_block(void* block_render_info)
                                   obj_size_x, obj_size_y, chunk_x, chunk_y);
         }
     }
+
     return NULL;
 }
 
@@ -174,9 +175,9 @@ static void paint_object(int outside, Uint8* pixels, Map_t* map, int ix, int iy,
 
             float light_norm = (float)map->light[pos] / 255.f;
 
-            pixel[0] = (Uint8)((float)(MIN(255, color[0] + map->col[pos_col + 0])) * light_norm);
-            pixel[1] = (Uint8)((float)(MIN(255, color[1] + map->col[pos_col + 1])) * light_norm);
-            pixel[2] = (Uint8)((float)(MIN(255, color[2] + map->col[pos_col + 2])) * light_norm);
+            pixel[0] = (Uint8)((float)MIN(255, color[0] + map->col[pos_col + 0]) * light_norm);
+            pixel[1] = (Uint8)((float)MIN(255, color[1] + map->col[pos_col + 1]) * light_norm);
+            pixel[2] = (Uint8)((float)MIN(255, color[2] + map->col[pos_col + 2]) * light_norm);
         }
     }
 }
@@ -228,9 +229,9 @@ static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_s
 
             float light_norm = (float)light[pos] / 255.f;
                    
-            pixel[0] = (Uint8)((float)(MIN(255, color[0] + pixel[0])) * light_norm);
-            pixel[1] = (Uint8)((float)(MIN(255, color[1] + pixel[1])) * light_norm);
-            pixel[2] = (Uint8)((float)(MIN(255, color[2] + pixel[2])) * light_norm);
+            pixel[0] = (Uint8)((float)MIN(255, color[0] + pixel[0]) * light_norm);
+            pixel[1] = (Uint8)((float)MIN(255, color[1] + pixel[1]) * light_norm);
+            pixel[2] = (Uint8)((float)MIN(255, color[2] + pixel[2]) * light_norm);
         }
     }
 }
@@ -238,7 +239,7 @@ static void paint_chunk(Uint8* pixels, int ix, int iy, int obj_size_x, int obj_s
 static int get_obj_index(int obj_sym)
 {
     for (int i = 0; i < COUNT_OBJECTS; i++)
-        if (OBJECTS[i].symbol == obj_sym)
+        if ((int)OBJECTS[i].symbol == obj_sym)
             return i;
     return -1;
 }
