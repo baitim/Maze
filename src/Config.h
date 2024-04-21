@@ -21,7 +21,7 @@
 #define light_dist (int)20
 #define light_force (double)1.f
 #define MAX_SIZE_INFO_STR (int)100
-#define RENDER_THREADS (int)3
+#define RENDER_THREADS (int)1
 #define TUNNELS_WIDTH  (int)2
 #define HILL_SLOPE (int)40
 #define MAX_HILL_HEIGHT (int)5

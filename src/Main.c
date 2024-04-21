@@ -49,9 +49,10 @@ int main(int argc, const char *argv[])
     error = window_prepare(&window, &texture, &renderer, &music, &pixels, &font, &cmd_data);
     if (error) goto error;
 
-    error = window_default_loop(&window, &texture, &renderer, &music, pixels, &font, &map, &PlayerSet,
+    error = window_default_loop(&window, &texture, &renderer, &music, &pixels, &font, &map, &PlayerSet,
                                 cmd_data.screenshot_file);
     if (error) goto error;
+
 
     goto finally;
 
@@ -60,6 +61,7 @@ error:
 
 finally:
     cmd_data_delete(&cmd_data);
+    free_window_stuff(window, renderer, texture, font, music, pixels);
 
     printf(print_lblue("\n# Bye!\n"));
     return 0;

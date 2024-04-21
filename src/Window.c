@@ -6,10 +6,6 @@
 
 static void lock_texture(SDL_Texture** texture, Uint8** pixels);
 
-static void free_window_stuff(SDL_Window** window, SDL_Renderer** renderer, SDL_Texture** texture,
-                              TTF_Font** font, Mix_Music** music, Uint8* pixels, char* pos_string,
-                              char* fps_string);
-
 ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
                          Mix_Music** music, Uint8** pixels, TTF_Font** font, CmdInputData_t* cmd_data)
 {
@@ -43,10 +39,13 @@ ErrorCode window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Rendere
 }
 
 ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                              Mix_Music** music, Uint8* pixels, TTF_Font** font, Map_t* map,
+                              Mix_Music** music, Uint8** pixels, TTF_Font** font, Map_t* map,
                               PlayerSet_t* PlayerSet, char* screenshot_file)
 {
-     Mix_PlayMusic(*music, -1);
+    Mix_PlayMusic(*music, -1);
+
+    Uint8* texture_pixels = (Uint8*) calloc(sizeof(Uint8), PIX_WIDTH * PIX_HEIGHT * 4);
+    if (!texture_pixels) return ERROR_ALLOC_FAIL;
 
     ErrorCode error = ERROR_NO;
     char* pos_string = (char*) calloc(MAX_SIZE_INFO_STR, sizeof(char));
@@ -65,19 +64,18 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
         while (SDL_PollEvent(&event)) {
             int is_exit = 0;
             error = control_event(map, PlayerSet, &event, &is_exit, renderer);
-            if (error) return error;
+            if (error) goto finally;
 
             if (is_exit) {
                 make_screenshot(*renderer, screenshot_file);
-                free_window_stuff(window, renderer, texture, font, music, pixels,
-                                  pos_string, fps_string);
-                return ERROR_NO;
+                goto finally;
             }
         }
         control_noevent(map, PlayerSet, renderer);
-
-        lock_texture(texture, &pixels);
-        render_map(pixels, map, PlayerSet);
+        
+        lock_texture(texture, &texture_pixels);
+        render_map(*pixels, map, PlayerSet);
+        memcpy(texture_pixels, *pixels, PIX_WIDTH * PIX_HEIGHT * 4 * sizeof(Uint8));
         SDL_UnlockTexture(*texture);
         SDL_RenderCopy(*renderer, *texture, NULL, NULL);
 
@@ -90,8 +88,12 @@ ErrorCode window_default_loop(SDL_Window** window, SDL_Texture** texture, SDL_Re
         SDL_RenderPresent(*renderer);
     }
 
-    free_window_stuff(window, renderer, texture, font, music, pixels, pos_string, fps_string);
-    return ERROR_NO;
+finally:
+    free(texture_pixels);
+    free(pos_string);
+    free(fps_string);
+    free(count_coins_string);
+    return error;
 }
 
 static void lock_texture(SDL_Texture** texture, Uint8** pixels)
@@ -104,21 +106,18 @@ static void lock_texture(SDL_Texture** texture, Uint8** pixels)
     return;
 }
 
-static void free_window_stuff(SDL_Window** window, SDL_Renderer** renderer, SDL_Texture** texture,
-                              TTF_Font** font, Mix_Music** music, Uint8* pixels, char* pos_string,
-                              char* fps_string)
+void free_window_stuff(SDL_Window* window, SDL_Renderer* renderer, SDL_Texture* texture,
+                       TTF_Font* font, Mix_Music* music, Uint8* pixels)
 {
-    SDL_DestroyWindow(*window);
-    SDL_DestroyRenderer(*renderer);
-    SDL_DestroyTexture(*texture);
-    TTF_CloseFont(*font);
-    Mix_FreeMusic(*music);
+    free(pixels);
+
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyTexture(texture);
+    TTF_CloseFont(font);
+    Mix_FreeMusic(music);
 
     Mix_Quit();
     TTF_Quit();
     SDL_Quit();
-    
-    free(pixels);
-    free(pos_string);
-    free(fps_string);
 }

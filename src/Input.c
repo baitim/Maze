@@ -7,10 +7,14 @@
 
 ErrorCode objects_get()
 {
+    SDL_Surface* img = NULL;
+    SDL_Surface* rgbaImage = NULL;
     for (int i = 0; i < COUNT_OBJECTS; i++) {
-        SDL_Surface* img = IMG_Load(OBJECTS[i].name_src_file);
-        SDL_Surface* rgbaImage = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_RGBA32, 0);
+        img = IMG_Load(OBJECTS[i].name_src_file);
+        rgbaImage = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_RGBA32, 0);
         memcpy(&OBJECTS[i].bytes_color, rgbaImage->pixels, hbyte2pix * wbyte2pix * 4);
     }
+    SDL_FreeSurface(img);
+    SDL_FreeSurface(rgbaImage);
     return ERROR_NO;
 }
