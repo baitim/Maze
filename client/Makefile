@@ -1,15 +1,20 @@
 CFLAGS   = -O3
 
-LFLAGS   = -l uv `sdl2-config --cflags --libs` -lSDL2
+LFLAGS   = -l uv -lpthread `sdl2-config --cflags --libs` -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_ttf
 
 CPP      = gcc
 LINKER   = gcc
 rm       = rm -rf
 
+TXTDIR   = txt
+IMAGEDIR = images
 SRCDIR   = src
 OBJDIR   = obj
 
-CMD_FLAGS = 
+CMD_FLAGS = --map_txt_file $(TXTDIR)/map.txt\
+			--screenshot_file $(IMAGEDIR)/Maze.png\
+			--font_file arial.ttf\
+			--help
 
 TARGET   = client
 

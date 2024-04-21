@@ -1,15 +1,25 @@
 #include "Control.h"
+#include "Window.h"
+#include "FindPath.h"
+#include "ProcessObject.h"
 
-void control(SDL_Event* event, PlayerControl_t* PlayerControl)
+static void control_mouse_move  (SDL_Renderer** renderer);
+static void control_follow_path (SDL_Renderer** renderer);
+static void callback_mouse_click();
+static void move_on_valid       (int dx, int dy);
+
+void control()
 {
-    switch (event->type) {
+    switch (event.type) {
         case SDL_QUIT:
-            PlayerControl->is_exit = 1;
+            player_set.is_exit = 1;
             return;
         case SDL_MOUSEBUTTONDOWN:
-            switch (event->button.button) {
+            switch (event.button.button) {
                 case SDL_BUTTON_LEFT:
-                    PlayerControl->mouse_button_left = 1;
+                    player_set.is_active_mouse_click  = 1;
+                    player_set.is_active_mouse_move  = 0;
+                    callback_mouse_click();
                     break;
                 case SDL_BUTTON_RIGHT:
                     break;
@@ -18,33 +28,37 @@ void control(SDL_Event* event, PlayerControl_t* PlayerControl)
             }
             return;
         case SDL_KEYDOWN:
-            switch (event->key.keysym.sym) {
+            switch (event.key.keysym.sym) {
                 case SDLK_SPACE:
-                    PlayerControl->space = 1;
+                    player_set.scale *= KScale;
+                    if (player_set.is_active_mouse_move) {
+                        clean_path(&player_set.path);
+                        player_set.is_active_mouse_click = 0;
+                    }
                     return;
                 case SDLK_z:
-                    PlayerControl->scale = 1;
+                    player_set.scale = 1;
                     return;
                 case SDLK_x:
-                    PlayerControl->scale = -1;
+                    player_set.scale = -1;
                     return;
                 case SDLK_F1:
-                    PlayerControl->info = 1;
+                    player_set.is_info = 1;
                     return;
                 case SDLK_LEFT : case SDLK_a:
-                    PlayerControl->dx = -1;
+                    player_set.dx = -1;
                     break;
                 case SDLK_RIGHT: case SDLK_d:
-                    PlayerControl->dx = 1;
+                    player_set.dx = 1;
                     break;
                 case SDLK_UP: case SDLK_w:
-                    PlayerControl->dy = -1;
+                    player_set.dy = -1;
                     break;
                 case SDLK_DOWN: case SDLK_s:
-                    PlayerControl->dy = 1;
+                    player_set.dy = 1;
                     break;
                 case SDLK_ESCAPE:
-                    PlayerControl->is_exit = 1;
+                    player_set.is_exit = 1;
                     return;
                 default:
                     break;
@@ -54,5 +68,119 @@ void control(SDL_Event* event, PlayerControl_t* PlayerControl)
             break;
     }
 
-    PlayerControl->is_exit = 0;
+    if (player_set.dx != 0 || player_set.dy != 0) {
+        clean_path(&player_set.path);
+        player_set.is_active_mouse_click = 0;
+        player_set.is_active_mouse_move  = 0;
+    }
+
+    player_set.is_exit = 0;
+}
+
+void control_noevent(SDL_Renderer** renderer)
+{
+    if (player_set.is_active_mouse_move)
+        control_mouse_move(renderer);
+
+    if (player_set.is_active_mouse_click)
+        control_follow_path(renderer);
+}
+
+static void control_mouse_move(SDL_Renderer** renderer)
+{
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    map_info.map[player_set.py * BYTE_WIDTH + player_set.px] = SYM_OBJ_ROAD;
+    int dx = 0, dy = 0;
+    
+    player_set.delay_dx = (player_set.delay_dx + 1) % delay_dx_max;
+    player_set.delay_dy = (player_set.delay_dy + 1) % delay_dy_max;
+    int XY_dx = player_set.dx * ((player_set.delay_dx == 0) ? 1 : 0);
+    int XY_dy = player_set.dy * ((player_set.delay_dy == 0) ? 1 : 0);
+    dx = (mouse_x > PIX_WIDTH  / 2) ? XY_dx : -XY_dx;
+    dy = (mouse_y > PIX_HEIGHT / 2) ? XY_dy : -XY_dy;
+    
+    move_on_valid(dx, dy);
+
+    process_object(renderer);
+    map_info.map[player_set.py * BYTE_WIDTH + player_set.px] = SYM_OBJ_PLAYER;
+}
+
+static void control_follow_path(SDL_Renderer** renderer)
+{
+    if (!player_set.path.path_exist && player_set.path.passed == player_set.path.count)
+        return;
+
+    map_info.map[player_set.py * BYTE_WIDTH + player_set.px] = SYM_OBJ_ROAD;
+    
+    player_set.delay_path = (player_set.delay_path + 1) % delay_path_count;
+
+    if (player_set.delay_path == 1) {
+        int new_x = 0;
+        int new_y = 0;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (abs(dx) + abs(dy) != 1)
+                    continue;
+                
+                int x = player_set.px + dx;
+                int y = player_set.py + dy;
+                if (y * BYTE_WIDTH + x < 0)
+                    continue;
+
+                if (player_set.path.path[y * BYTE_WIDTH + x] == player_set.path.passed + 1) {
+                    new_x = x;
+                    new_y = y;
+                }
+            }
+        }
+        player_set.path.passed++;
+        player_set.px = new_x;
+        player_set.py = new_y;
+    }
+
+    if (player_set.path.passed == player_set.path.count) {
+        player_set.delay_path = 0;
+        clean_path(&player_set.path);
+    }
+
+    process_object(renderer);
+
+    map_info.map[player_set.py * BYTE_WIDTH + player_set.px] = SYM_OBJ_PLAYER;
+}
+
+static void callback_mouse_click()
+{
+
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    double dx = (mouse_x < PIX_WIDTH  / 2) ? 1 - wbyte2pix : wbyte2pix - 1;
+    double dy = (mouse_y < PIX_HEIGHT / 2) ? 1 - hbyte2pix : hbyte2pix - 1;
+
+    mouse_x = (int)((double)((double)((double)mouse_x - (double)PIX_WIDTH  / 2 + dx) / (double)wbyte2pix / (double)wscale_render) / (double)player_set.scale);
+    mouse_y = (int)((double)((double)((double)mouse_y - (double)PIX_HEIGHT / 2 + dy) / (double)hbyte2pix / (double)hscale_render) / (double)player_set.scale);
+    mouse_x = player_set.px + mouse_x;
+    mouse_y = player_set.py + mouse_y;
+
+    find_shortest_path(mouse_x, mouse_y);
+}
+
+static void move_on_valid(int dx, int dy)
+{
+    if (passable_object(map_info.map, player_set.px + dx, player_set.py))
+        player_set.px += dx;
+
+    if (passable_object(map_info.map, player_set.px, player_set.py + dy))
+        player_set.py += dy;
+}
+
+int passable_object(char* map, int x, int y)
+{
+    for (int i = 0; i < COUNT_OBJECTS; i++) {
+        if (map[y * BYTE_WIDTH + x] == (char)OBJECTS[i].symbol && OBJECTS[i].can_go)
+            return 1;
+    }
+    return 0;
 }
