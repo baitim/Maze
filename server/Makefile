@@ -1,15 +1,16 @@
 CFLAGS   = -O3
 
-LFLAGS   = -l uv
+LFLAGS   = -l uv -lm
 
 CPP      = gcc
 LINKER   = gcc
 rm       = rm -rf
 
+TXTDIR   = txt
 SRCDIR   = src
 OBJDIR   = obj
 
-CMD_FLAGS = 
+CMD_FLAGS = --map_txt_file $(TXTDIR)/map.txt
 
 TARGET   = server
 
@@ -17,9 +18,13 @@ SOURCES  := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-$(TARGET): $(OBJDIR) $(OBJECTS)
+$(TARGET): $(TXTDIR) $(OBJDIR) $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking complete!"
+
+$(TXTDIR):
+	@mkdir $(TXTDIR)
+	@echo "Created txt directory!"
 
 $(OBJDIR):
 	@mkdir $(OBJDIR)

@@ -1,25 +1,40 @@
 #ifndef CLIENT_SRC_SOCKETS_H
 #define CLIENT_SRC_SOCKETS_H
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <uv.h>
 
+#include "Output.h"
 #include "Config.h"
 #include "Errors.h"
 
-#define MAP_INFO "MapInfo {\n"    		\
-                 "\tmap: %s[^Ъ]\n"    	\
-                 "\tcol: %s[^Ъ]\n"   	\
-                 "\tlight: %s[^Ъ]\n"	\
-                 "\tpx: %d\n"  			\
-                 "\tpy: %d\n"  			\
-				 "\tcount_coins: %d\n"  \
-                 "}\n"
+typedef struct DataOnRecv_t_ {
+	SDL_Window** window;
+    SDL_Texture** texture;
+    SDL_Renderer** renderer;
+    Mix_Music** music;
+    Uint8** pixels;
+    TTF_Font** font;
+    char* screenshot_file;
+    InfoStrings_t* info_strings;
+} DataOnRecv_t;
 
-#define PLAYER_CONTROL_FORMAT "PlayerControl {\n"   \
-                              "\tis_exit: %d\n"     \
-                              "\tdx: %d\n"          \
-                              "\tdy: %d\n"          \
-                              "}\n"                 
+#define MAP_INFO_IN "MapInfo {\n"    		\
+                    "\tmap: %s[^Ъ]\n"    	\
+                    "\tcol: %s[^Ъ]\n"   	\
+                    "\tlight: %s[^Ъ]\n"	    \
+                    "\tpx: %d\n"  			\
+                    "\tpy: %d\n"  			\
+				    "\tcount_coins: %d\n"   \
+                    "}\n"
+
+#define PLAYER_CONTROL_FORMAT_OUT   "PlayerControl {\n"   \
+                                    "\tis_exit: %d\n"     \
+                                    "\tdx: %d\n"          \
+                                    "\tdy: %d\n"          \
+                                    "}\n"                 
 
 extern uv_udp_t client_handle;
 extern int player_id;

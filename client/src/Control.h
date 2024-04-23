@@ -6,7 +6,7 @@
 #include "Sockets.h"
 
 void control        ();
-void control_noevent(SDL_Renderer** renderer);
+void control_noevent();
 int passable_object (char* map, int x, int y);
 
 #endif // CLIENT_SRC_CONTROL_H

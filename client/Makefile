@@ -11,8 +11,7 @@ IMAGEDIR = images
 SRCDIR   = src
 OBJDIR   = obj
 
-CMD_FLAGS = --map_txt_file $(TXTDIR)/map.txt\
-			--screenshot_file $(IMAGEDIR)/Maze.png\
+CMD_FLAGS = --screenshot_file $(IMAGEDIR)/Maze.png\
 			--font_file arial.ttf\
 			--help
 

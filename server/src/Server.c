@@ -1,131 +1,58 @@
 #include <stdio.h>
-#include <uv.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
+#include <uv.h>
 
-#define MAX_PLAYERS 5000
-#define MAX_SIZE_BUFFER 1000
+#include "Life.h"
+#include "Config.h"
+#include "Sockets.h"
+#include "Errors.h"
+#include "ProcessCmd.h"
 
-typedef struct _player {
-	int status;
-	struct sockaddr_in addr;
-	uv_udp_t sock;
-	int id;
-	float px, py;
-} Player;
-
-Player players[MAX_PLAYERS];
-
-uv_loop_t* loop;
-uv_udp_t server;
-
-void register_player(const struct sockaddr* addr);
-
-void send_text_cb(uv_udp_send_t* req, int status)
+int main(int argc, const char* argv[])
 {
-	free(uv_req_get_data((uv_req_t*)req));
-	free(req);
-}
-
-void send_text(int i, char* buf)
-{
-	size_t sz = strlen(buf);
-
-	uv_udp_send_t* req = malloc(sizeof(uv_udp_send_t));
-	uv_buf_t wbuf = uv_buf_init(buf, sz);
-	uv_req_set_data((uv_req_t*)req, buf);
-	uv_udp_send(req, &server, &wbuf, 1, (struct sockaddr*)&players[i].addr, send_text_cb);
-}
-
-void alloc_buffer(uv_handle_t* client, size_t sz, uv_buf_t* buf)
-{
-	buf->base = malloc(sz);
-	buf->len = sz;
-}
-
-void answer_message(const struct sockaddr* addr, int id)
-{
-	fprintf(stderr, "asnwer message %d\n", id);
-}
-
-void answer_id(const uv_buf_t* buf, const struct sockaddr* addr)
-{
-	int id = 0;
-	int nread = 0;
-	if (sscanf(buf->base, "msg %d%n", &id, &nread) == 1) {
-		for (int i = 0; i < MAX_PLAYERS; i++) {
-			if (players[i].status == 0) continue;
-
-			if (players[i].id == id && memcmp(&players[i].addr, addr, sizeof(struct sockaddr_in) != 0)) {
-				printf("Unauthorized access!\n");
-				return;
-			} 
-			else if (players[i].id == id) {
-				answer_message(addr, id);
-				return;
-			}
-		}
-	} else {
-		printf("Error while parsing program: message format invalid\n");
-	}
-}
-
-void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf,
-			 const struct sockaddr* addr, unsigned flags)
-{
-	if (nread > 0) {
-		printf("%ld bytes got from %p\n", nread, addr);
-		printf("message = %s\n", buf->base);
-		if (!strncmp(buf->base, "connect", 7)) {
-			printf("Registering...\n");
-			register_player(addr);
-		} else if (!strncmp(buf->base, "msg ", 4)) {
-			answer_id(buf, addr);
-		} else {
-			printf("Unknown request\n");
-		}
-	}
-}
-
-void on_timer(uv_timer_t* timer)
-{
-	for (int i = 0; i < MAX_PLAYERS; i++ ) {
-		if (players[i].status == 1) {
-			char* buffer = calloc(MAX_SIZE_BUFFER, sizeof(char));
-			sprintf(buffer, "msg %d", i);
-			send_text(i, buffer);
-		}
-	}
-}
-
-void register_player(const struct sockaddr* addr)
-{
-	for (int i = 0; i < MAX_PLAYERS; i++ ) {
-		if (!players[i].status) {
-			struct sockaddr_in* addr_in = (struct sockaddr_in*)addr;
-			char* a= (char*)&(addr_in->sin_addr.s_addr);
-			printf("Registering player from %hhu.%hhu.%hhu.%hhu:%d\n", a[0], a[1], a[2], a[3], addr_in->sin_port);
-			players[i] = (Player){1, *addr_in, (uv_udp_t){0}, i, 7, 11};
-			uv_udp_init(loop, &players[i].sock);
-			
-			char* buffer = calloc(MAX_SIZE_BUFFER, sizeof(char));
-			sprintf(buffer, "id %d", i);
-			send_text(i, buffer);
-			return;
-		}
-	}
-}
-
-int main()
-{
-	for (int i = 0; i < MAX_PLAYERS; i++)
-		players[i].status = 0;
+	srand((unsigned int)time(NULL));
+    ErrorCode error = ERROR_NO;
+    CmdInputData_t cmd_data = {};
 
 	uv_timer_t timer;
 	struct sockaddr_in addr;
+	int loop_result = 0;
+
+	error = cmd_data_init(argc, argv, &cmd_data);
+    if (error) goto error;
+
+    error = cmd_data_verify(&cmd_data);
+    if (error) goto error;
+
+    error = cmd_data_callback(&cmd_data);
+    if (error) goto error;
+
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		players[i].status 		= PLAYER_STATUS_EXIT;
+		players[i].is_exit 		= 0;
+		players[i].count_coins 	= 0;
+		players[i].px 			= 0;
+		players[i].py 			= 0;
+		players[i].dx 			= 0;
+		players[i].dy 			= 0;
+	}
+
+	Map_t map = {};
+
+    error = map_create(&map, cmd_data.map_txt_file);
+    if (error) goto error;
+
 	loop = uv_default_loop();
+
+	DataOnRecv_t* data_on_recv = malloc(sizeof(DataOnRecv_t));
+	if (!data_on_recv) {
+		error = ERROR_ALLOC_FAIL;
+		goto error;
+	}
+	memcpy(data_on_recv->map, map.map, SCREEN_BYTES_COUNT * sizeof(char));
+	uv_handle_set_data((uv_handle_t*)&addr, (void*)data_on_recv);
 
 	uv_udp_init(loop, &server);
 	uv_ip4_addr("0.0.0.0", 5002, &addr);
@@ -133,11 +60,27 @@ int main()
 	printf("Starting server\n");
 	uv_udp_recv_start(&server, alloc_buffer, on_recv);
 	
+	DataOnTimer_t* data_on_timer = malloc(sizeof(DataOnTimer_t));
+	if (!data_on_timer) {
+		error = ERROR_ALLOC_FAIL;
+		goto error;
+	}
+	memcpy(data_on_timer->map,   map.map,   SCREEN_BYTES_COUNT * sizeof(char));
+	memcpy(data_on_timer->col,   map.col,   SCREEN_BYTES_COUNT * 3 * sizeof(char));
+	memcpy(data_on_timer->light, map.light, SCREEN_BYTES_COUNT * sizeof(unsigned char));
+	uv_handle_set_data((uv_handle_t*)&timer, (void*)data_on_timer);
+
 	uv_timer_init(loop, &timer);
 	printf("Starting timer\n");
 	uv_timer_start(&timer, on_timer, 1000, 1000);
 
-	int result = uv_run(loop, UV_RUN_DEFAULT);
-	return result;
+	loop_result = uv_run(loop, UV_RUN_DEFAULT);
 
+error:
+    err_dump(error);
+
+finally:
+    cmd_data_delete(&cmd_data);
+
+	return 0;
 }

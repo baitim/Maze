@@ -1,5 +1,5 @@
-#ifndef CLIENT_SRC_CONFIG_H
-#define CLIENT_SRC_CONFIG_H
+#ifndef SRC_CONFIG_H
+#define SRC_CONFIG_H
 
 #define hbyte2pix (int)4
 #define wbyte2pix (int)4
@@ -26,7 +26,6 @@
 #define HILL_SLOPE (int)40
 #define MAX_HILL_HEIGHT (int)5
 #define AUDIO_FREQUENCY 44100
-#define KScale (double)1.3f
 
 typedef struct Path_t_ {
     int path[SCREEN_BYTES_COUNT];
@@ -36,30 +35,13 @@ typedef struct Path_t_ {
     int path_exist;
 } Path_t;
 
-typedef struct PlayerSet_t_ {
-    int is_exit;
-    int is_active_mouse_move;
-    int is_active_mouse_click;
-    int is_info;
-    int px, py;
-    int dx, dy;
-    int delay_dx, delay_dy;
-    int delay_path;
-    int delay_info;
-    double scale;
-    int count_coins;
-    Path_t path;
-} PlayerSet_t;
-extern PlayerSet_t player_set;
-
-typedef struct MapInfo_t_ {
+typedef struct Map_t_ {
     char map[SCREEN_BYTES_COUNT];
     unsigned char col[SCREEN_BYTES_COUNT * 3];
     unsigned char light[SCREEN_BYTES_COUNT];
-    int px, py;
-	int count_coins;
-} MapInfo_t;
-extern MapInfo_t map_info;
+    unsigned char shadow[SCREEN_BYTES_COUNT];
+    Path_t path;
+} Map_t;
 
 typedef enum ObjectsSymbols_ {
     SYM_OBJ_WALL    = '#',
@@ -76,14 +58,27 @@ typedef enum ObjectsSymbols_ {
     SYM_OBJ_SCREAM  = 'S'
 } ObjectsSymbols;
 
+typedef enum CountObject2Render_ {
+    COUNT_OBJ_INF =    -1,
+    COUNT_OBJ_PLAYER =  1,
+    COUNT_OBJ_COIN =   70,
+    COUNT_OBJ_LAMP =   85,
+    COUNT_OBJ_PATH =   -2,
+    COUNT_OBJ_SCREAM = 40
+} CountObject2Render;
+
 #define COUNT_OBJECTS 12
 
 typedef struct Object_t_ {
     ObjectsSymbols symbol;
+    CountObject2Render count;
     int can_go;
     const char* name_src_file;
+    const int transparency;
+    const int count_neighbors;
+    ObjectsSymbols neighbors[COUNT_OBJECTS];
     unsigned char bytes_color[hbyte2pix * wbyte2pix * 4];
 } Object_t;
 extern Object_t OBJECTS[COUNT_OBJECTS];
 
-#endif // CLIENT_SRC_CONFIG_H
+#endif // SRC_CONFIG_H

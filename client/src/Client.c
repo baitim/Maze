@@ -30,6 +30,10 @@ int main(int argc, const char* argv[])
     Mix_Music* music        = NULL;
     Uint8* pixels           = NULL;
     TTF_Font* font          = NULL;
+    uv_loop_t* loop         = NULL;
+	uv_timer_t timer;
+	struct sockaddr_in addr;
+    DataOnRecv_t* data_on_recv = NULL;
 
 	error = cmd_data_init(argc, argv, &cmd_data);
     if (error) goto error;
@@ -49,9 +53,20 @@ int main(int argc, const char* argv[])
     error = window_prepare(&window, &texture, &renderer, &music, &pixels, &font, &cmd_data);
     if (error) goto error;
 
-	uv_loop_t* loop;	
-	uv_timer_t timer;
-	struct sockaddr_in addr;
+    data_on_recv = malloc(sizeof(DataOnRecv_t));
+	if (!data_on_recv) {
+		error = ERROR_ALLOC_FAIL;
+		goto error;
+	}
+    data_on_recv->window    = &window;
+    data_on_recv->texture   = &texture;
+    data_on_recv->renderer  = &renderer;
+    data_on_recv->music     = &music;
+    data_on_recv->pixels    = &pixels;
+    data_on_recv->font      = &font;
+    data_on_recv->screenshot_file = cmd_data.screenshot_file;
+    data_on_recv->info_strings = &info_strings;
+	uv_handle_set_data((uv_handle_t*)&addr, (void*)data_on_recv);
 
 	loop = uv_default_loop();
 	uv_udp_init(loop, &client_handle);
@@ -65,7 +80,7 @@ int main(int argc, const char* argv[])
 	uv_timer_start(&timer, on_timer, 1500, 1500);
     int result = uv_run(loop, UV_RUN_DEFAULT);
 
-	error:
+error:
     err_dump(error);
 
 finally:

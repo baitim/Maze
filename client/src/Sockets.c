@@ -7,7 +7,7 @@
 #include "Config.h"
 #include "Window.h"
 
-#define MAX_SIZE_BUFFER 10000
+#define MAX_SIZE_BUFFER 1000000
 
 uv_udp_t client_handle;
 int player_id = -1;
@@ -56,31 +56,36 @@ static void send_text(char* buf)
 static void set_id(char* message)
 {
 	if (strncmp(message, "id ", 3) == 0)
-		player_id = atoi(message + 3);
+		sscanf(message, "%d", &player_id);
 }
 
 static void get_map_info(char* message)
 {
-	if (strncmp(message, "map ", 3) != 0)
-		return;
+	int nread = 0;
+	int id = -1;
+	if (sscanf(message, "map %d\n%n", &id, &nread) == 1) {
+		message += nread;
 
-	message += 3;
-	if (player_id == atoi(message)) {
-		sscanf(message, "\n");
-		sscanf(message, MAP_INFO, map_info.map, map_info.col, map_info.light,
-						          &map_info.px,  &map_info.py,  &map_info.count_coins);
+		if (id == player_id) {
+			sscanf(message, MAP_INFO_IN, map_info.map, map_info.col, map_info.light,
+										 &map_info.px,  &map_info.py,  &map_info.count_coins);
+		}
 	}
 }
 
 void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf,
 		     const struct sockaddr* addr, unsigned flags)
 {
-	fprintf(stderr, "recv: %s\n", buf->base);
+	DataOnRecv_t* data_on_recv = (DataOnRecv_t*)uv_handle_get_data((uv_handle_t*)handle);
 
 	if (player_id == -1)
 		set_id(buf->base);
 	else
 		get_map_info(buf->base);
+
+	sockets_error = window_default_step(data_on_recv->window, data_on_recv->texture,
+				data_on_recv->renderer, data_on_recv->music, data_on_recv->pixels,
+				data_on_recv->font, data_on_recv->screenshot_file, data_on_recv->info_strings);
 }
 
 void rally_connect()
@@ -111,8 +116,9 @@ static void make_control_buffer(char** buffer)
 		sockets_error = ERROR_ALLOC_FAIL;
 		return;
 	}
+	sprintf(*buffer, "player %d\n", player_id);
 
-	sprintf(*buffer, PLAYER_CONTROL_FORMAT, player_set.is_exit, player_set.dx, player_set.dy);
+	sprintf(*buffer, PLAYER_CONTROL_FORMAT_OUT, player_set.is_exit, player_set.dx, player_set.dy);
 }
 
 void on_timer(uv_timer_t* timer)
@@ -122,7 +128,6 @@ void on_timer(uv_timer_t* timer)
 	if (player_id != -1) {
 		char* buffer = NULL;
 		make_control_buffer(&buffer);
-		fprintf(stderr, "%s", buffer);
 		send_text(buffer);
 	}
 }

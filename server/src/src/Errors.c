@@ -6,9 +6,12 @@
 const Error_t ERRORS[] = {
     {ERROR_NO,                  "no errors"},
     {ERROR_ALLOC_FAIL,          "alloc fail"},
+    {ERROR_OPEN_FILE,           "can't open file"},
+    {ERROR_INVALID_CMD_DATA,    "cmd data already free"},
+    {ERROR_INVALID_FILE_MAP,    "invalid name of file to save map in txt"},
     {ERROR_INVALID_FILE_SCR,    "invalid name of file to save screenshot"},
     {ERROR_INVALID_FILE_FONT,   "invalid name of file to set font"},
-    {ERROR_INVALID_CMD_DATA,    "cmd data already free"}
+    {ERROR_CANT_LOAD_OBJECT,    "sfml can't load object from file"}
 };
 const int COUNT_ERRORS = sizeof(ERRORS) / sizeof(Error_t);
 
@@ -29,7 +32,7 @@ void err_dump_(int err, const char* file, const char* func, int line)
         if (err & pow)
             print_error(err, ERRORS[i].description);
         if (!pow)   pow++;
-        else        pow = pow << 1;
+        else        pow *= 2;
     }
 }
 
