@@ -30,6 +30,8 @@ static void send_text(int i, char* buf)
 	size_t sz = strlen(buf);
 
 	uv_udp_send_t* req = malloc(sizeof(uv_udp_send_t));
+	if (!req) return;
+
 	uv_buf_t wbuf = uv_buf_init(buf, sz);
 	uv_req_set_data((uv_req_t*)req, buf);
 	uv_udp_send(req, &server, &wbuf, 1, (struct sockaddr*)&players[i].addr, send_text_cb);
@@ -93,8 +95,10 @@ static void send_state(int i, DataOnTimer_t* data_on_timer)
 	sprintf(buffer, "map %d\n", i);
 
 	sprintf(buffer, MAP_INFO_OUT, data_on_timer->map, data_on_timer->col,
-								  data_on_timer->light, data_on_timer->px, data_on_timer->py,
-								  data_on_timer->count_coins);
+								  data_on_timer->light, players[i].px, players[i].py,
+								  players[i].count_coins);
+
+	send_text(i, buffer);
 }
 
 void on_timer(uv_timer_t* timer)
@@ -110,6 +114,7 @@ void on_timer(uv_timer_t* timer)
 
 static void register_player(const struct sockaddr* addr, DataOnRecv_t* data_on_recv)
 {
+
 	for (int i = 0; i < MAX_PLAYERS; i++ ) {
 		if (players[i].status == PLAYER_STATUS_EXIT) {
 			struct sockaddr_in* addr_in = (struct sockaddr_in*)addr;

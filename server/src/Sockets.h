@@ -9,8 +9,6 @@ typedef struct DataOnTimer_t_ {
 	char map[SCREEN_BYTES_COUNT];
     unsigned char col[SCREEN_BYTES_COUNT * 3];
     unsigned char light[SCREEN_BYTES_COUNT];
-	int px, py;
-	int count_coins;
 } DataOnTimer_t;
 
 typedef struct DataOnRecv_t_ {

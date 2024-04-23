@@ -55,12 +55,16 @@ static void send_text(char* buf)
 
 static void set_id(char* message)
 {
-	if (strncmp(message, "id ", 3) == 0)
+	if (strncmp(message, "id ", 3) == 0) {
+		message += 3;
 		sscanf(message, "%d", &player_id);
+	}
 }
 
 static void get_map_info(char* message)
 {
+fprintf(stderr, "1 get_map_info\n");
+fprintf(stderr, "buf = %s\n", message);
 	int nread = 0;
 	int id = -1;
 	if (sscanf(message, "map %d\n%n", &id, &nread) == 1) {
@@ -71,21 +75,28 @@ static void get_map_info(char* message)
 										 &map_info.px,  &map_info.py,  &map_info.count_coins);
 		}
 	}
+	fprintf(stderr, "player pos = %d %d\n", map_info.px, map_info.py);
+fprintf(stderr, "2 get_map_info\n");
 }
 
 void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf,
 		     const struct sockaddr* addr, unsigned flags)
 {
+	fprintf(stderr, "1 on recv, id = %d\n", player_id);
+
+	fprintf(stderr, "buf = %s\n", buf->base);
+
 	DataOnRecv_t* data_on_recv = (DataOnRecv_t*)uv_handle_get_data((uv_handle_t*)handle);
 
-	if (player_id == -1)
+	if (player_id == -1) {
 		set_id(buf->base);
-	else
+	} else {
 		get_map_info(buf->base);
-
-	sockets_error = window_default_step(data_on_recv->window, data_on_recv->texture,
+		sockets_error = window_default_step(data_on_recv->window, data_on_recv->texture,
 				data_on_recv->renderer, data_on_recv->music, data_on_recv->pixels,
 				data_on_recv->font, data_on_recv->screenshot_file, data_on_recv->info_strings);
+	}
+	fprintf(stderr, "2 on recv, id = %d\n", player_id);
 }
 
 void rally_connect()
@@ -123,6 +134,8 @@ static void make_control_buffer(char** buffer)
 
 void on_timer(uv_timer_t* timer)
 {
+	fprintf(stderr, "1 on timer, id = %d\n", player_id);
+
 	SDL_PollEvent(&event);
 
 	if (player_id != -1) {
@@ -130,4 +143,6 @@ void on_timer(uv_timer_t* timer)
 		make_control_buffer(&buffer);
 		send_text(buffer);
 	}
+
+	fprintf(stderr, "2 on timer, id = %d\n", player_id);
 }

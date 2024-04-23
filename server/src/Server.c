@@ -52,7 +52,7 @@ int main(int argc, const char* argv[])
 		goto error;
 	}
 	memcpy(data_on_recv->map, map.map, SCREEN_BYTES_COUNT * sizeof(char));
-	uv_handle_set_data((uv_handle_t*)&addr, (void*)data_on_recv);
+	uv_handle_set_data((uv_handle_t*)&server, (void*)data_on_recv);
 
 	uv_udp_init(loop, &server);
 	uv_ip4_addr("0.0.0.0", 5002, &addr);
